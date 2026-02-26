@@ -7,6 +7,7 @@ import Board from "@/components/Board";
 // Mock next-auth/react
 jest.mock("next-auth/react", () => ({
   signOut: jest.fn(),
+  useSession: () => ({ data: { user: { id: "user-1" } } }),
 }));
 
 // Mock next/link
@@ -49,6 +50,24 @@ const MOCK_BOARD = {
 
 jest.mock("@/hooks/useBoard", () => ({
   useBoard: () => ({ data: MOCK_BOARD, isLoading: false, error: null }),
+}));
+
+jest.mock("@/hooks/useBoardChannel", () => ({
+  useBoardChannel: () => ({ onlineUsers: [] }),
+}));
+
+jest.mock("@/hooks/useLabels", () => ({
+  useLabels: () => ({ data: [] }),
+  useLabelMutations: () => ({ createLabel: {}, updateLabel: {}, deleteLabel: {} }),
+}));
+
+jest.mock("@/hooks/useMembers", () => ({
+  useMembers: () => ({ data: [] }),
+  useMemberMutations: () => ({ updateRole: {}, removeMember: {} }),
+}));
+
+jest.mock("@/hooks/useSearch", () => ({
+  useSearch: () => ({ data: [] }),
 }));
 
 // Mock fetch globally

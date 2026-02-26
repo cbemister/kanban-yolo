@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import {
@@ -15,11 +15,15 @@ import {
 } from "@dnd-kit/core";
 import type { DragStartEvent, DragOverEvent, DragEndEvent } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
-import type { Column as ColumnType, Card as CardType } from "@/types";
+import type { Column as ColumnType, Card as CardType, ActiveFilters } from "@/types";
 import { useBoard } from "@/hooks/useBoard";
+import { useBoardChannel } from "@/hooks/useBoardChannel";
+import type { SearchResult } from "@/hooks/useSearch";
 import Column from "./Column";
 import AddCardModal from "./AddCardModal";
 import CardDetailModal from "./CardDetailModal";
+import BoardToolbar from "./BoardToolbar";
+import { isPast, differenceInDays, parseISO } from "date-fns";
 
 function CardOverlay({ card }: { card: CardType }) {
   return (
@@ -43,13 +47,64 @@ interface BoardProps {
   boardId: string;
 }
 
+function applyFilters(columns: ColumnType[], filters: ActiveFilters): ColumnType[] {
+  const hasFilters =
+    filters.labelIds.length > 0 ||
+    filters.assigneeId !== null ||
+    filters.dueSoon ||
+    filters.overdue;
+
+  if (!hasFilters) return columns;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return columns.map((col) => ({
+    ...col,
+    cards: col.cards.filter((card) => {
+      if (filters.labelIds.length > 0) {
+        const cardLabelIds = (card.labels ?? []).map((cl) => cl.labelId);
+        if (!filters.labelIds.some((id) => cardLabelIds.includes(id))) return false;
+      }
+
+      if (filters.assigneeId) {
+        const assigneeIds = (card.assignees ?? []).map((a) => a.userId);
+        if (!assigneeIds.includes(filters.assigneeId)) return false;
+      }
+
+      if (filters.overdue && card.dueDate) {
+        const date = parseISO(card.dueDate);
+        if (!isPast(date) || differenceInDays(today, date) === 0) return false;
+      }
+
+      if (filters.dueSoon && card.dueDate) {
+        const date = parseISO(card.dueDate);
+        const diff = differenceInDays(date, today);
+        if (diff < 0 || diff > 2) return false;
+      }
+
+      return true;
+    }),
+  }));
+}
+
 export default function Board({ boardId }: BoardProps) {
   const queryClient = useQueryClient();
+  const { data: session } = useSession();
   const { data: boardData, isLoading, error } = useBoard(boardId);
   const [columns, setColumns] = useState<ColumnType[]>([]);
   const [activeCard, setActiveCard] = useState<CardType | null>(null);
   const [addCardTarget, setAddCardTarget] = useState<string | null>(null);
   const [viewCard, setViewCard] = useState<CardType | null>(null);
+  const [filters, setFilters] = useState<ActiveFilters>({
+    labelIds: [],
+    assigneeId: null,
+    dueSoon: false,
+    overdue: false,
+  });
+
+  // Real-time sync
+  useBoardChannel(boardId);
 
   useEffect(() => {
     if (boardData) setColumns(boardData.columns);
@@ -248,6 +303,23 @@ export default function Board({ boardId }: BoardProps) {
     setColumns((cols) => [...cols, { ...newColumn, cards: [] }]);
   }
 
+  function handleSearchResultClick(result: SearchResult) {
+    // Find the card in the columns
+    for (const col of columns) {
+      const card = col.cards.find((c) => c.id === result.id);
+      if (card) { setViewCard(card); return; }
+    }
+    // If filtered out, open with the result data mapped to Card type
+    setViewCard({
+      id: result.id,
+      title: result.title,
+      details: result.details,
+      dueDate: result.dueDate,
+      labels: result.labels.map((l) => ({ cardId: result.id, labelId: l.labelId, label: l.label })),
+      assignees: result.assignees.map((a) => ({ cardId: result.id, userId: a.userId, user: a.user })),
+    });
+  }
+
   if (isLoading) {
     return (
       <div className="flex h-dvh items-center justify-center" style={{ background: "#032147" }}>
@@ -265,28 +337,23 @@ export default function Board({ boardId }: BoardProps) {
     );
   }
 
+  const currentUserId = session?.user?.id ?? "";
+  // Determine current user role: if board owner, OWNER; else check members
+  const currentUserRole = boardData?.ownerId === currentUserId ? "OWNER" : "EDITOR";
+
+  const filteredColumns = applyFilters(columns, filters);
+
   return (
     <div className="flex flex-col h-dvh" style={{ background: "#032147" }}>
-      {/* Header */}
-      <header className="flex items-center justify-between px-4 sm:px-8 py-4 border-b border-white/10 flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <Link href="/boards" className="text-white/60 hover:text-white transition-colors mr-1" title="All boards">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M19 12H5M12 19l-7-7 7-7" />
-            </svg>
-          </Link>
-          <div className="w-1 h-8 rounded-full" style={{ background: "#ecad0a" }} />
-          <h1 className="text-xl font-bold text-white tracking-tight truncate max-w-xs sm:max-w-md">
-            {boardData?.title ?? "Board"}
-          </h1>
-        </div>
-        <button
-          onClick={() => signOut({ callbackUrl: "/login" })}
-          className="text-sm text-white/60 hover:text-white transition-colors"
-        >
-          Sign out
-        </button>
-      </header>
+      <BoardToolbar
+        boardId={boardId}
+        boardTitle={boardData?.title ?? "Board"}
+        currentUserId={currentUserId}
+        currentUserRole={currentUserRole}
+        filters={filters}
+        onFiltersChange={setFilters}
+        onSearchResultClick={handleSearchResultClick}
+      />
 
       {/* Board */}
       <DndContext
@@ -298,7 +365,7 @@ export default function Board({ boardId }: BoardProps) {
       >
         <div className="flex-1 overflow-x-auto overflow-y-hidden scrollbar-hide snap-x snap-mandatory">
           <div className="flex gap-4 sm:gap-5 p-4 sm:p-6 h-full items-stretch">
-            {columns.map((col) => (
+            {filteredColumns.map((col) => (
               <Column
                 key={col.id}
                 column={col}
@@ -336,6 +403,7 @@ export default function Board({ boardId }: BoardProps) {
       {viewCard && (
         <CardDetailModal
           card={viewCard}
+          boardId={boardId}
           onClose={() => setViewCard(null)}
           onSave={updateCard}
         />

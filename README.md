@@ -1,25 +1,55 @@
 # Kanban Project Manager
 
-## Instructions
+A full-stack Kanban-style project management app built with Next.js 15.
 
-This is a skeleton project to be the basis for your Kanban project for Week 1 of the Complete AI Coder Course. See the course resources for more.
+## Tech Stack
 
-You should clone this repo within your projects directory with:
+- **Frontend:** Next.js 15, TypeScript, Tailwind CSS v4, @dnd-kit
+- **Auth:** NextAuth v5 (credentials + Google OAuth)
+- **Database:** Prisma 6 + Neon PostgreSQL
+- **State:** @tanstack/react-query v5
+- **Real-time:** Pusher (presence channels)
+- **Email:** Resend
 
-`git clone https://github.com/ed-donner/kanban.git`
+## Features
 
-And then refine the AGENTS.md before using in your Coding Agent of choice.
+- Drag-and-drop cards across columns
+- Multi-board support per user
+- Card labels, assignees, and due dates
+- Board sharing and invitations by email
+- Real-time collaboration via Pusher
+- Search and filter cards by label, assignee, or due date
 
-If you don't have git installed, you can [install it here](https://git-scm.com/install/) and you might need to reboot afterwards.
+## Getting Started
 
-## Contributing your AGENTS.md
+```bash
+cd frontend
+npm install
+cp .env.example .env  # fill in your credentials
+npx prisma migrate dev
+npx prisma db seed
+npm run dev
+```
 
-If you have suggested AGENTS.md changes that have worked well for you, please contribute them to benefit other students! Follow the instructions linked [here](https://edwarddonner.com/pr) to raise a PR to put it in community_contributions. Name your file something like ED_DONNER_AGENTS.md but with your name..
+Open [http://localhost:3000](http://localhost:3000). Demo account: `demo@kanban.dev` / `password123`.
 
-I can't wait to see your changes.
+## Environment Variables
 
-## Posting your app
+| Variable | Description |
+|---|---|
+| `DATABASE_URL` | Neon PostgreSQL connection string |
+| `AUTH_SECRET` | NextAuth secret (generate with `npx auth secret`) |
+| `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` | Google OAuth (optional) |
+| `RESEND_API_KEY` | Resend API key for invitation emails |
+| `NEXT_PUBLIC_APP_URL` | App base URL |
+| `PUSHER_APP_ID` / `PUSHER_SECRET` | Pusher server credentials |
+| `NEXT_PUBLIC_PUSHER_KEY` / `NEXT_PUBLIC_PUSHER_CLUSTER` | Pusher client credentials |
 
-When you've successfully built a Kanban app, if you'd like to post about it on LinkedIn and tag me, then I'll weigh in to amplify your success and draw more attention to your achievements.
+## Commands
 
-If you see other students doing this, please weigh in yourself to add your support and encouragement. It's so helpful for the community if we support each other.
+```bash
+npm run dev          # Start dev server
+npm run build        # Production build
+npm test             # Unit tests
+npx playwright test  # Integration tests
+```

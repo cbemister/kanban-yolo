@@ -5,6 +5,9 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { Card as CardType } from "@/types";
 import ConfirmDialog from "./ConfirmDialog";
+import LabelChip from "./LabelChip";
+import UserAvatar from "./UserAvatar";
+import DueDateBadge from "./DueDateBadge";
 
 interface CardProps {
   card: CardType;
@@ -31,6 +34,10 @@ export default function Card({ card, columnId, onDelete, onClick }: CardProps) {
     opacity: isDragging ? 0.4 : 1,
   };
 
+  const visibleAssignees = (card.assignees ?? []).slice(0, 3);
+  const overflowCount = (card.assignees?.length ?? 0) - 3;
+  const hasFooter = (card.labels?.length ?? 0) > 0 || (card.assignees?.length ?? 0) > 0 || card.dueDate;
+
   return (
     <>
       <div
@@ -56,9 +63,32 @@ export default function Card({ card, columnId, onDelete, onClick }: CardProps) {
           {card.title}
         </h3>
         {card.details && (
-          <p className="text-xs leading-relaxed line-clamp-2" style={{ color: "#888888" }}>
+          <p className="text-xs leading-relaxed line-clamp-2 mb-2" style={{ color: "#888888" }}>
             {card.details}
           </p>
+        )}
+
+        {hasFooter && (
+          <div className="flex items-center gap-2 flex-wrap mt-1">
+            {card.dueDate && <DueDateBadge dueDate={card.dueDate} />}
+            {(card.labels ?? []).slice(0, 3).map((cl) => (
+              <LabelChip key={cl.labelId} label={cl.label} size="sm" />
+            ))}
+            {visibleAssignees.length > 0 && (
+              <div className="flex -space-x-1 ml-auto">
+                {visibleAssignees.map((a) => (
+                  <UserAvatar key={a.userId} user={a.user} size="sm" />
+                ))}
+                {overflowCount > 0 && (
+                  <span
+                    className="w-6 h-6 rounded-full bg-gray-200 text-gray-600 text-xs flex items-center justify-center font-medium"
+                  >
+                    +{overflowCount}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
         )}
       </div>
 

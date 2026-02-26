@@ -6,6 +6,7 @@ import {
   unauthorized,
   notFound,
 } from "@/lib/auth-helpers";
+import { broadcastToBoard } from "@/lib/broadcast";
 
 type Params = { params: Promise<{ columnId: string }> };
 
@@ -39,6 +40,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     data: parsed.data,
   });
 
+  await broadcastToBoard(column.boardId, "column:updated", { columnId, boardId: column.boardId });
+
   return NextResponse.json(updated);
 }
 
@@ -51,6 +54,8 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
   if (!column) return notFound();
 
   await prisma.column.delete({ where: { id: columnId } });
+
+  await broadcastToBoard(column.boardId, "column:deleted", { columnId, boardId: column.boardId });
 
   return new NextResponse(null, { status: 204 });
 }

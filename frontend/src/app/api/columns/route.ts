@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUserId, unauthorized, notFound } from "@/lib/auth-helpers";
+import { broadcastToBoard } from "@/lib/broadcast";
 
 const createSchema = z.object({
   boardId: z.string(),
@@ -37,6 +38,8 @@ export async function POST(req: NextRequest) {
       position,
     },
   });
+
+  await broadcastToBoard(parsed.data.boardId, "column:created", { columnId: column.id, boardId: parsed.data.boardId });
 
   return NextResponse.json(column, { status: 201 });
 }

@@ -4,6 +4,7 @@ import type { Column } from "@/types";
 export interface BoardDetail {
   id: string;
   title: string;
+  ownerId: string;
   columns: Column[];
 }
 

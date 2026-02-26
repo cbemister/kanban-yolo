@@ -15,20 +15,46 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
   const { boardId } = await params;
 
-  const board = await prisma.board.findFirst({
-    where: { id: boardId, userId },
+  // Allow board members as well as owner
+  const board = await prisma.board.findUnique({
+    where: { id: boardId },
+  });
+
+  if (!board) return notFound();
+
+  const isOwner = board.userId === userId;
+  if (!isOwner) {
+    const member = await prisma.boardMember.findUnique({
+      where: { boardId_userId: { boardId, userId } },
+    });
+    if (!member) return notFound();
+  }
+
+  const fullBoard = await prisma.board.findUnique({
+    where: { id: boardId },
     include: {
       columns: {
         orderBy: { position: "asc" },
         include: {
-          cards: { orderBy: { position: "asc" } },
+          cards: {
+            orderBy: { position: "asc" },
+            include: {
+              labels: { include: { label: true } },
+              assignees: {
+                include: {
+                  user: { select: { id: true, name: true, email: true, image: true } },
+                },
+              },
+            },
+          },
         },
       },
     },
   });
 
-  if (!board) return notFound();
-  return NextResponse.json(board);
+  if (!fullBoard) return notFound();
+
+  return NextResponse.json({ ...fullBoard, ownerId: fullBoard.userId });
 }
 
 const patchSchema = z.object({

@@ -6,6 +6,8 @@ import {
   unauthorized,
   notFound,
 } from "@/lib/auth-helpers";
+import { broadcastToBoard } from "@/lib/broadcast";
+import { getBoardIdFromCard } from "@/lib/permissions";
 
 type Params = { params: Promise<{ cardId: string }> };
 
@@ -31,6 +33,7 @@ const patchSchema = z.object({
   details: z.string().max(10000).optional(),
   position: z.number().int().min(0).optional(),
   columnId: z.string().optional(),
+  dueDate: z.string().datetime().nullish(),
 });
 
 export async function PATCH(req: NextRequest, { params }: Params) {
@@ -47,10 +50,21 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   }
 
+  const { dueDate, ...rest } = parsed.data;
+  const updateData: Record<string, unknown> = { ...rest };
+  if (dueDate !== undefined) {
+    updateData.dueDate = dueDate ? new Date(dueDate) : null;
+  }
+
   const updated = await prisma.card.update({
     where: { id: cardId },
-    data: parsed.data,
+    data: updateData,
   });
+
+  const boardId = await getBoardIdFromCard(cardId);
+  if (boardId) {
+    await broadcastToBoard(boardId, "card:updated", { cardId, boardId });
+  }
 
   return NextResponse.json(updated);
 }
@@ -63,7 +77,13 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
   const card = await getCardForUser(cardId, userId);
   if (!card) return notFound();
 
+  const boardId = await getBoardIdFromCard(cardId);
+
   await prisma.card.delete({ where: { id: cardId } });
+
+  if (boardId) {
+    await broadcastToBoard(boardId, "card:deleted", { cardId, boardId });
+  }
 
   return new NextResponse(null, { status: 204 });
 }

@@ -1,30 +1,41 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code when working with this repository.
 
 ## Project Overview
 
-Kanban-style project management web app (MVP). Single board with 5 renamable columns, cards with title/details, drag-and-drop between columns. No persistence, no user management, no archive/search/filter. Opens with dummy data.
+Full-stack Kanban SaaS app. Multi-board, drag-and-drop cards, collaboration with labels/assignees/due dates, board sharing, real-time sync via Pusher.
 
-The full business and technical requirements are in `AGENTS.md`.
+All application code lives in the `frontend/` subdirectory (Next.js 15).
+
+Detailed references:
+- @frontend/CLAUDE-schema.md — database models and migration notes
+- @frontend/CLAUDE-api.md — API route inventory
+- @frontend/CLAUDE-frontend.md — components, hooks, pages, and key patterns
 
 ## Tech Stack
 
-- Next.js (client-rendered), located in `frontend/` subdirectory
-- No backend/database -- all state is client-side
+- Next.js 15 + TypeScript + Tailwind CSS v4
+- NextAuth v5 beta (JWT sessions, Credentials + Google)
+- Prisma 6 + Neon PostgreSQL
+- @tanstack/react-query v5 + react-hot-toast + zod
+- @dnd-kit (drag-and-drop)
+- Pusher + pusher-js (real-time)
+- Resend (email)
+- date-fns + react-day-picker
 
 ## Common Commands
-
-Once the `frontend/` app is scaffolded:
 
 ```bash
 cd frontend
 npm install
-npm run dev          # Start dev server
+npm run dev          # Start dev server (http://localhost:3000)
 npm run build        # Production build
 npm run lint         # ESLint
-npm test             # Unit tests (Jest/Vitest)
+npm test             # Unit tests
 npx playwright test  # Integration tests
+npx prisma migrate dev --name <name>  # New migration
+npx prisma db seed   # Seed demo data (demo@kanban.dev / password123)
 ```
 
 ## Color Scheme
@@ -34,7 +45,7 @@ npx playwright test  # Integration tests
 | Accent Yellow    | `#ecad0a` | Accent lines, highlights       |
 | Blue Primary     | `#209dd7` | Links, key sections            |
 | Purple Secondary | `#753991` | Submit buttons, important actions |
-| Dark Navy        | `#032147` | Main headings                  |
+| Dark Navy        | `#032147` | Main headings, board background |
 | Gray Text        | `#888888` | Supporting text, labels        |
 
 ## Coding Standards
@@ -44,3 +55,5 @@ npx playwright test  # Integration tests
 - Use latest library versions and idiomatic patterns.
 - No emojis in code or documentation.
 - Keep README minimal.
+- All API routes use `checkBoardPermission` from `src/lib/permissions.ts` for auth.
+- Broadcasts to Pusher via `broadcastToBoard` after all mutating API calls.

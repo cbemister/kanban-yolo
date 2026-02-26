@@ -8,17 +8,21 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  emailVerified DateTime?
-  image         String?
-  passwordHash  String?
-  accounts      Account[]
-  sessions      Session[]
-  boards        Board[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                 String         @id @default(cuid())
+  name               String?
+  email              String         @unique
+  emailVerified      DateTime?
+  image              String?
+  passwordHash       String?
+  accounts           Account[]
+  sessions           Session[]
+  boards             Board[]
+  assignedCards      CardAssignee[]
+  boardMembers       BoardMember[]
+  sentInvitations    Invitation[]   @relation("InvitedBy")
+  receivedInvitations Invitation[]  @relation("InvitedUser")
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
 }
 
 model Account {
@@ -56,13 +60,16 @@ model VerificationToken {
 }
 
 model Board {
-  id        String   @id @default(cuid())
-  title     String
-  userId    String
-  columns   Column[]
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String        @id @default(cuid())
+  title       String
+  userId      String
+  columns     Column[]
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  labels      Label[]
+  members     BoardMember[]
+  invitations Invitation[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
   @@index([userId])
 }
@@ -79,14 +86,89 @@ model Column {
 }
 
 model Card {
-  id        String   @id @default(cuid())
+  id        String         @id @default(cuid())
   title     String
-  details   String   @default("")
+  details   String         @default("")
   position  Int
   columnId  String
-  column    Column   @relation(fields: [columnId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  dueDate   DateTime?
+  column    Column         @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  labels    CardLabel[]
+  assignees CardAssignee[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
 
   @@index([columnId])
+}
+
+model Label {
+  id      String      @id @default(cuid())
+  name    String
+  color   String
+  boardId String
+  board   Board       @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  cards   CardLabel[]
+
+  @@unique([boardId, name])
+  @@index([boardId])
+}
+
+model CardLabel {
+  cardId  String
+  labelId String
+  card    Card   @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  label   Label  @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@id([cardId, labelId])
+}
+
+model CardAssignee {
+  cardId String
+  userId String
+  card   Card   @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([cardId, userId])
+}
+
+enum BoardRole {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+model BoardMember {
+  boardId  String
+  userId   String
+  role     BoardRole @default(EDITOR)
+  joinedAt DateTime  @default(now())
+  board    Board     @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([boardId, userId])
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+model Invitation {
+  id          String           @id @default(cuid())
+  boardId     String
+  email       String
+  role        BoardRole
+  status      InvitationStatus @default(PENDING)
+  invitedById String
+  userId      String?
+  token       String           @unique @default(cuid())
+  expiresAt   DateTime
+  board       Board            @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  invitedBy   User             @relation("InvitedBy", fields: [invitedById], references: [id], onDelete: Cascade)
+  user        User?            @relation("InvitedUser", fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([boardId])
+  @@index([email])
+  @@index([token])
 }

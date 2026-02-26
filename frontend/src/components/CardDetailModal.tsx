@@ -1,19 +1,29 @@
 "use client";
 
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 import type { Card } from "@/types";
+import LabelPicker from "./LabelPicker";
+import LabelChip from "./LabelChip";
+import AssigneePicker from "./AssigneePicker";
+import UserAvatar from "./UserAvatar";
+import DueDatePicker from "./DueDatePicker";
+import DueDateBadge from "./DueDateBadge";
 
 interface CardDetailModalProps {
   card: Card;
+  boardId: string;
   onClose: () => void;
   onSave: (updated: Card) => void;
 }
 
-export default function CardDetailModal({ card, onClose, onSave }: CardDetailModalProps) {
+export default function CardDetailModal({ card, boardId, onClose, onSave }: CardDetailModalProps) {
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(card.title);
   const [details, setDetails] = useState(card.details);
   const [saving, setSaving] = useState(false);
+  const queryClient = useQueryClient();
 
   async function handleSave() {
     const trimmedTitle = title.trim();
@@ -30,6 +40,54 @@ export default function CardDetailModal({ card, onClose, onSave }: CardDetailMod
     setEditing(false);
   }
 
+  async function handleLabelToggle(labelId: string) {
+    const isSelected = (card.labels ?? []).some((cl) => cl.labelId === labelId);
+    try {
+      const res = await fetch(`/api/cards/${card.id}/labels`, {
+        method: isSelected ? "DELETE" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ labelId }),
+      });
+      if (!res.ok) throw new Error();
+      queryClient.invalidateQueries({ queryKey: ["board", boardId] });
+    } catch {
+      toast.error("Failed to update label");
+    }
+  }
+
+  async function handleAssigneeToggle(userId: string) {
+    const isAssigned = (card.assignees ?? []).some((a) => a.userId === userId);
+    try {
+      const res = await fetch(`/api/cards/${card.id}/assignees`, {
+        method: isAssigned ? "DELETE" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+      if (!res.ok) throw new Error();
+      queryClient.invalidateQueries({ queryKey: ["board", boardId] });
+    } catch {
+      toast.error("Failed to update assignee");
+    }
+  }
+
+  async function handleDueDateChange(date: Date | null) {
+    try {
+      const res = await fetch(`/api/cards/${card.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dueDate: date ? date.toISOString() : null }),
+      });
+      if (!res.ok) throw new Error();
+      queryClient.invalidateQueries({ queryKey: ["board", boardId] });
+    } catch {
+      toast.error("Failed to update due date");
+    }
+  }
+
+  const selectedLabelIds = (card.labels ?? []).map((cl) => cl.labelId);
+  const assigneeIds = (card.assignees ?? []).map((a) => a.userId);
+  const dueDateValue = card.dueDate ? new Date(card.dueDate) : null;
+
   return (
     <div
       className="fixed inset-0 flex items-center justify-center z-50"
@@ -37,7 +95,7 @@ export default function CardDetailModal({ card, onClose, onSave }: CardDetailMod
       onClick={editing ? undefined : onClose}
     >
       <div
-        className="bg-white rounded-xl shadow-xl p-4 sm:p-6 w-full max-w-md mx-4 relative"
+        className="bg-white rounded-xl shadow-xl p-4 sm:p-6 w-full max-w-md mx-4 relative max-h-[90dvh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -105,14 +163,62 @@ export default function CardDetailModal({ card, onClose, onSave }: CardDetailMod
               {card.title}
             </h2>
             {card.details ? (
-              <p className="text-sm leading-relaxed mb-5" style={{ color: "#888888" }}>
+              <p className="text-sm leading-relaxed mb-4" style={{ color: "#888888" }}>
                 {card.details}
               </p>
             ) : (
-              <p className="text-sm italic mb-5" style={{ color: "#888888" }}>
+              <p className="text-sm italic mb-4" style={{ color: "#888888" }}>
                 No details provided.
               </p>
             )}
+
+            {/* Due Date */}
+            <div className="mb-4">
+              <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: "#888888" }}>
+                Due Date
+              </p>
+              <div className="flex items-center gap-2">
+                {card.dueDate && <DueDateBadge dueDate={card.dueDate} />}
+                <DueDatePicker value={dueDateValue} onChange={handleDueDateChange} />
+              </div>
+            </div>
+
+            {/* Labels */}
+            <div className="mb-4">
+              <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: "#888888" }}>
+                Labels
+              </p>
+              <div className="flex items-center gap-2 flex-wrap">
+                {(card.labels ?? []).map((cl) => (
+                  <LabelChip key={cl.labelId} label={cl.label} size="sm" />
+                ))}
+                <LabelPicker
+                  boardId={boardId}
+                  cardId={card.id}
+                  selectedLabelIds={selectedLabelIds}
+                  onToggle={handleLabelToggle}
+                />
+              </div>
+            </div>
+
+            {/* Assignees */}
+            <div className="mb-5">
+              <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: "#888888" }}>
+                Assignees
+              </p>
+              <div className="flex items-center gap-2 flex-wrap">
+                {(card.assignees ?? []).map((a) => (
+                  <UserAvatar key={a.userId} user={a.user} size="md" />
+                ))}
+                <AssigneePicker
+                  boardId={boardId}
+                  cardId={card.id}
+                  assigneeIds={assigneeIds}
+                  onToggle={handleAssigneeToggle}
+                />
+              </div>
+            </div>
+
             <button
               onClick={() => setEditing(true)}
               className="text-sm font-medium transition-colors"

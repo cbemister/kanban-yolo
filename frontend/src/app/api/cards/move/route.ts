@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUserId, unauthorized, notFound } from "@/lib/auth-helpers";
+import { broadcastToBoard } from "@/lib/broadcast";
 
 const moveSchema = z.object({
   cardId: z.string(),
@@ -35,6 +36,8 @@ export async function PUT(req: NextRequest) {
     where: { id: cardId },
     data: { columnId: targetColumnId, position },
   });
+
+  await broadcastToBoard(targetColumn.boardId, "card:moved", { cardId, boardId: targetColumn.boardId });
 
   return NextResponse.json(updated);
 }
