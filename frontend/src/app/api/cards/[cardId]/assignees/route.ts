@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { checkBoardPermission, getBoardIdFromCard } from "@/lib/permissions";
+import { inngest } from "@/lib/inngest";
 
 type Params = { params: Promise<{ cardId: string }> };
 
@@ -57,6 +58,11 @@ export async function POST(req: NextRequest, { params }: Params) {
       user: { select: { id: true, name: true, email: true, image: true } },
     },
   });
+
+  await inngest.send({
+    name: "card/assigned",
+    data: { cardId, assigneeId: parsed.data.userId, assignedById: perm.userId, boardId },
+  }).catch(() => {}); // fire-and-forget, don't fail the request
 
   return NextResponse.json(assignee, { status: 201 });
 }

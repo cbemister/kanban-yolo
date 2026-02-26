@@ -10,19 +10,25 @@ import AssigneePicker from "./AssigneePicker";
 import UserAvatar from "./UserAvatar";
 import DueDatePicker from "./DueDatePicker";
 import DueDateBadge from "./DueDateBadge";
+import CommentList from "./CommentList";
+import CommentInput from "./CommentInput";
+import AttachmentList from "./AttachmentList";
+import FileUpload from "./FileUpload";
 
 interface CardDetailModalProps {
   card: Card;
   boardId: string;
+  currentUserId: string;
   onClose: () => void;
   onSave: (updated: Card) => void;
 }
 
-export default function CardDetailModal({ card, boardId, onClose, onSave }: CardDetailModalProps) {
+export default function CardDetailModal({ card, boardId, currentUserId, onClose, onSave }: CardDetailModalProps) {
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(card.title);
   const [details, setDetails] = useState(card.details);
   const [saving, setSaving] = useState(false);
+  const [attachRefresh, setAttachRefresh] = useState(0);
   const queryClient = useQueryClient();
 
   async function handleSave() {
@@ -226,6 +232,26 @@ export default function CardDetailModal({ card, boardId, onClose, onSave }: Card
             >
               Edit
             </button>
+
+            {/* Comments */}
+            <div className="mt-6 border-t border-gray-100 pt-5">
+              <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: "#888888" }}>
+                Comments
+              </p>
+              <CommentList cardId={card.id} currentUserId={currentUserId} />
+              <CommentInput cardId={card.id} />
+            </div>
+
+            {/* Attachments */}
+            <div className="mt-5 border-t border-gray-100 pt-5">
+              <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: "#888888" }}>
+                Attachments
+              </p>
+              <AttachmentList cardId={card.id} currentUserId={currentUserId} key={attachRefresh} />
+              <div className="mt-2">
+                <FileUpload cardId={card.id} onUploaded={() => setAttachRefresh((n) => n + 1)} />
+              </div>
+            </div>
           </>
         )}
       </div>

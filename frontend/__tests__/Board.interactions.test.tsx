@@ -11,6 +11,12 @@ jest.mock("react-day-picker", () => ({
   ),
 }));
 
+// Mock next/navigation
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({ replace: jest.fn() }),
+  useSearchParams: () => ({ get: jest.fn(() => null) }),
+}));
+
 jest.mock("next-auth/react", () => ({
   signOut: jest.fn(),
   useSession: () => ({ data: { user: { id: "user-1" } } }),
@@ -89,6 +95,37 @@ jest.mock("@/hooks/useMembers", () => ({
 jest.mock("@/hooks/useSearch", () => ({
   useSearch: () => ({ data: [] }),
 }));
+
+jest.mock("@/hooks/useBoards", () => ({
+  useBoards: () => ({ data: [] }),
+}));
+
+// Mock components that make their own fetch calls or use intervals
+jest.mock("@/components/CommentList", () => {
+  const Mock = () => null;
+  Mock.displayName = "CommentList";
+  return { __esModule: true, default: Mock };
+});
+jest.mock("@/components/CommentInput", () => {
+  const Mock = () => null;
+  Mock.displayName = "CommentInput";
+  return { __esModule: true, default: Mock };
+});
+jest.mock("@/components/NotificationBell", () => {
+  const Mock = () => null;
+  Mock.displayName = "NotificationBell";
+  return { __esModule: true, default: Mock };
+});
+jest.mock("@/components/AttachmentList", () => {
+  const Mock = () => null;
+  Mock.displayName = "AttachmentList";
+  return { __esModule: true, default: Mock };
+});
+jest.mock("@/components/FileUpload", () => {
+  const Mock = () => null;
+  Mock.displayName = "FileUpload";
+  return { __esModule: true, default: Mock };
+});
 
 global.fetch = jest.fn(() =>
   Promise.resolve({

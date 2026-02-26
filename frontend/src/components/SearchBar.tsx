@@ -53,6 +53,7 @@ export default function SearchBar({ value, onChange, onClear }: SearchBarProps) 
         placeholder="Search cards..."
         className="pl-9 pr-8 py-1.5 text-sm border border-white/20 rounded-lg bg-white/10 text-white placeholder-white/40 focus:outline-none focus:ring-2 w-48 focus:w-64 transition-all"
         style={{ "--tw-ring-color": "#209dd7" } as React.CSSProperties}
+        data-search-input
       />
       {localValue && (
         <button

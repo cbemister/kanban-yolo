@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUserId, unauthorized, notFound } from "@/lib/auth-helpers";
 import { broadcastToBoard } from "@/lib/broadcast";
+import { logActivity } from "@/lib/activity";
 
 const moveSchema = z.object({
   cardId: z.string(),
@@ -38,6 +39,13 @@ export async function PUT(req: NextRequest) {
   });
 
   await broadcastToBoard(targetColumn.boardId, "card:moved", { cardId, boardId: targetColumn.boardId });
+  await logActivity(
+    targetColumn.boardId,
+    userId,
+    "moved card",
+    { cardTitle: card.title, targetColumnTitle: targetColumn.title },
+    cardId
+  );
 
   return NextResponse.json(updated);
 }

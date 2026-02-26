@@ -7,6 +7,7 @@ import {
   notFound,
 } from "@/lib/auth-helpers";
 import { broadcastToBoard } from "@/lib/broadcast";
+import { logActivity } from "@/lib/activity";
 
 type Params = { params: Promise<{ columnId: string }> };
 
@@ -56,6 +57,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
   await prisma.column.delete({ where: { id: columnId } });
 
   await broadcastToBoard(column.boardId, "column:deleted", { columnId, boardId: column.boardId });
+  await logActivity(column.boardId, userId, "deleted column", { columnTitle: column.title });
 
   return new NextResponse(null, { status: 204 });
 }

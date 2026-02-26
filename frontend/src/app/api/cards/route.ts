@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUserId, unauthorized, notFound } from "@/lib/auth-helpers";
 import { broadcastToBoard } from "@/lib/broadcast";
+import { logActivity } from "@/lib/activity";
 
 const createSchema = z.object({
   columnId: z.string(),
@@ -42,6 +43,7 @@ export async function POST(req: NextRequest) {
   });
 
   await broadcastToBoard(column.boardId, "card:created", { cardId: card.id, boardId: column.boardId });
+  await logActivity(column.boardId, userId, "created card", { cardTitle: card.title }, card.id);
 
   return NextResponse.json(card, { status: 201 });
 }

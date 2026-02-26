@@ -8,6 +8,7 @@ import {
 } from "@/lib/auth-helpers";
 import { broadcastToBoard } from "@/lib/broadcast";
 import { getBoardIdFromCard } from "@/lib/permissions";
+import { logActivity } from "@/lib/activity";
 
 type Params = { params: Promise<{ cardId: string }> };
 
@@ -64,6 +65,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   const boardId = await getBoardIdFromCard(cardId);
   if (boardId) {
     await broadcastToBoard(boardId, "card:updated", { cardId, boardId });
+    await logActivity(boardId, userId, "updated card", { cardTitle: updated.title }, cardId);
   }
 
   return NextResponse.json(updated);
@@ -83,6 +85,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
 
   if (boardId) {
     await broadcastToBoard(boardId, "card:deleted", { cardId, boardId });
+    await logActivity(boardId, userId, "deleted card", { cardTitle: card.title });
   }
 
   return new NextResponse(null, { status: 204 });

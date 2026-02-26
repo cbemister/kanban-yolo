@@ -11,6 +11,9 @@ import SearchResults from "./SearchResults";
 import FilterBar from "./FilterBar";
 import PresenceIndicator from "./PresenceIndicator";
 import ShareModal from "./ShareModal";
+import ActivitySidebar from "./ActivitySidebar";
+import { ThemeToggle } from "./ThemeToggle";
+import NotificationBell from "./NotificationBell";
 
 interface BoardToolbarProps {
   boardId: string;
@@ -33,6 +36,7 @@ export default function BoardToolbar({
 }: BoardToolbarProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [shareOpen, setShareOpen] = useState(false);
+  const [activityOpen, setActivityOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const { data: searchResults = [] } = useSearch(boardId, searchQuery);
 
@@ -78,6 +82,21 @@ export default function BoardToolbar({
 
           <PresenceIndicator boardId={boardId} />
 
+          <button
+            type="button"
+            onClick={() => setActivityOpen(true)}
+            className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg transition-colors text-white/70 hover:text-white hover:bg-white/10"
+            title="Activity feed"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+            Activity
+          </button>
+
+          <NotificationBell />
+
           {currentUserRole === "OWNER" && (
             <button
               type="button"
@@ -88,6 +107,8 @@ export default function BoardToolbar({
               Share
             </button>
           )}
+
+          <ThemeToggle />
 
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
@@ -106,6 +127,12 @@ export default function BoardToolbar({
           onClose={() => setShareOpen(false)}
         />
       )}
+
+      <ActivitySidebar
+        boardId={boardId}
+        isOpen={activityOpen}
+        onClose={() => setActivityOpen(false)}
+      />
     </>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
@@ -24,6 +25,10 @@ import AddCardModal from "./AddCardModal";
 import CardDetailModal from "./CardDetailModal";
 import BoardToolbar from "./BoardToolbar";
 import { isPast, differenceInDays, parseISO } from "date-fns";
+import { useHotkeys } from "@/hooks/useHotkeys";
+import { useUndoRedo } from "@/hooks/useUndoRedo";
+import CommandPalette from "./CommandPalette";
+import ShortcutsHelp from "./ShortcutsHelp";
 
 function CardOverlay({ card }: { card: CardType }) {
   return (
@@ -96,12 +101,24 @@ export default function Board({ boardId }: BoardProps) {
   const [activeCard, setActiveCard] = useState<CardType | null>(null);
   const [addCardTarget, setAddCardTarget] = useState<string | null>(null);
   const [viewCard, setViewCard] = useState<CardType | null>(null);
-  const [filters, setFilters] = useState<ActiveFilters>({
-    labelIds: [],
-    assigneeId: null,
-    dueSoon: false,
-    overdue: false,
-  });
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const initialFilters: ActiveFilters = (() => {
+    const encoded = searchParams.get("filters");
+    if (!encoded) return { labelIds: [], assigneeId: null, dueSoon: false, overdue: false };
+    try {
+      return JSON.parse(atob(encoded));
+    } catch {
+      return { labelIds: [], assigneeId: null, dueSoon: false, overdue: false };
+    }
+  })();
+
+  const [filters, setFilters] = useState<ActiveFilters>(initialFilters);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [shortcutsHelpOpen, setShortcutsHelpOpen] = useState(false);
+
+  const { pushAction, undo, redo } = useUndoRedo();
 
   // Real-time sync
   useBoardChannel(boardId);
@@ -240,16 +257,39 @@ export default function Board({ boardId }: BoardProps) {
   }
 
   async function deleteCard(columnId: string, cardId: string) {
+    const col = columns.find((c) => c.id === columnId);
+    const card = col?.cards.find((c) => c.id === cardId);
+    if (!card) return;
+
     setColumns((cols) =>
-      cols.map((col) =>
-        col.id === columnId ? { ...col, cards: col.cards.filter((c) => c.id !== cardId) } : col
+      cols.map((c) =>
+        c.id === columnId ? { ...c, cards: c.cards.filter((ca) => ca.id !== cardId) } : c
       )
     );
+
     const res = await fetch(`/api/cards/${cardId}`, { method: "DELETE" });
     if (!res.ok) {
       toast.error("Failed to delete card");
       queryClient.invalidateQueries({ queryKey: ["board", boardId] });
+      return;
     }
+
+    pushAction({
+      execute: async () => {
+        await fetch(`/api/cards/${cardId}`, { method: "DELETE" });
+        queryClient.invalidateQueries({ queryKey: ["board", boardId] });
+      },
+      undo: async () => {
+        await fetch("/api/cards", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ columnId, title: card.title, details: card.details }),
+        });
+        queryClient.invalidateQueries({ queryKey: ["board", boardId] });
+      },
+    });
+
+    toast.success("Card deleted — press Ctrl+Z to undo");
   }
 
   async function updateCard(updated: CardType) {
@@ -303,6 +343,16 @@ export default function Board({ boardId }: BoardProps) {
     setColumns((cols) => [...cols, { ...newColumn, cards: [] }]);
   }
 
+  function handleFiltersChange(f: ActiveFilters) {
+    setFilters(f);
+    const hasFilters = f.labelIds.length > 0 || f.assigneeId !== null || f.dueSoon || f.overdue;
+    if (hasFilters) {
+      router.replace("?" + new URLSearchParams({ filters: btoa(JSON.stringify(f)) }).toString(), { scroll: false });
+    } else {
+      router.replace(window.location.pathname, { scroll: false });
+    }
+  }
+
   function handleSearchResultClick(result: SearchResult) {
     // Find the card in the columns
     for (const col of columns) {
@@ -319,6 +369,75 @@ export default function Board({ boardId }: BoardProps) {
       assignees: result.assignees.map((a) => ({ cardId: result.id, userId: a.userId, user: a.user })),
     });
   }
+
+  const stableUndo = useCallback(() => { undo(); }, [undo]);
+  const stableRedo = useCallback(() => { redo(); }, [redo]);
+
+  useHotkeys([
+    {
+      key: "n",
+      handler: () => {
+        if (columns.length > 0) setAddCardTarget(columns[0].id);
+      },
+    },
+    {
+      key: "/",
+      handler: () => {
+        const searchInput = document.querySelector<HTMLInputElement>("[data-search-input]");
+        searchInput?.focus();
+      },
+    },
+    {
+      key: "k",
+      modifiers: ["ctrl"],
+      handler: () => setCommandPaletteOpen(true),
+      allowInInput: false,
+    },
+    {
+      key: "k",
+      modifiers: ["meta"],
+      handler: () => setCommandPaletteOpen(true),
+      allowInInput: false,
+    },
+    {
+      key: "?",
+      handler: () => setShortcutsHelpOpen(true),
+    },
+    {
+      key: "z",
+      modifiers: ["ctrl"],
+      handler: stableUndo,
+      allowInInput: false,
+    },
+    {
+      key: "z",
+      modifiers: ["meta"],
+      handler: stableUndo,
+      allowInInput: false,
+    },
+    {
+      key: "z",
+      modifiers: ["ctrl", "shift"],
+      handler: stableRedo,
+      allowInInput: false,
+    },
+    {
+      key: "z",
+      modifiers: ["meta", "shift"],
+      handler: stableRedo,
+      allowInInput: false,
+    },
+    {
+      key: "Escape",
+      handler: () => {
+        if (commandPaletteOpen) setCommandPaletteOpen(false);
+        else if (shortcutsHelpOpen) setShortcutsHelpOpen(false);
+        else if (viewCard) setViewCard(null);
+        else if (addCardTarget) setAddCardTarget(null);
+      },
+      allowInInput: true,
+    },
+  ]);
 
   if (isLoading) {
     return (
@@ -351,7 +470,7 @@ export default function Board({ boardId }: BoardProps) {
         currentUserId={currentUserId}
         currentUserRole={currentUserRole}
         filters={filters}
-        onFiltersChange={setFilters}
+        onFiltersChange={handleFiltersChange}
         onSearchResultClick={handleSearchResultClick}
       />
 
@@ -404,9 +523,21 @@ export default function Board({ boardId }: BoardProps) {
         <CardDetailModal
           card={viewCard}
           boardId={boardId}
+          currentUserId={session?.user?.id ?? ""}
           onClose={() => setViewCard(null)}
           onSave={updateCard}
         />
+      )}
+      {commandPaletteOpen && (
+        <CommandPalette
+          boardId={boardId}
+          columns={columns}
+          onClose={() => setCommandPaletteOpen(false)}
+          onNewCard={columns.length > 0 ? () => setAddCardTarget(columns[0].id) : undefined}
+        />
+      )}
+      {shortcutsHelpOpen && (
+        <ShortcutsHelp onClose={() => setShortcutsHelpOpen(false)} />
       )}
     </div>
   );

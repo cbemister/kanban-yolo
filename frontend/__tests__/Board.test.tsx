@@ -4,6 +4,12 @@ import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Board from "@/components/Board";
 
+// Mock next/navigation
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({ replace: jest.fn() }),
+  useSearchParams: () => ({ get: jest.fn(() => null) }),
+}));
+
 // Mock next-auth/react
 jest.mock("next-auth/react", () => ({
   signOut: jest.fn(),
@@ -69,6 +75,16 @@ jest.mock("@/hooks/useMembers", () => ({
 jest.mock("@/hooks/useSearch", () => ({
   useSearch: () => ({ data: [] }),
 }));
+
+jest.mock("@/hooks/useBoards", () => ({
+  useBoards: () => ({ data: [] }),
+}));
+
+jest.mock("@/components/NotificationBell", () => {
+  const Mock = () => null;
+  Mock.displayName = "NotificationBell";
+  return { __esModule: true, default: Mock };
+});
 
 // Mock fetch globally
 global.fetch = jest.fn(() =>

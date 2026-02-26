@@ -56,3 +56,45 @@ export interface ActiveFilters {
   dueSoon: boolean;
   overdue: boolean;
 }
+
+export interface Comment {
+  id: string;
+  content: string;
+  cardId: string;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+  user: { id: string; name: string | null; email: string; image: string | null };
+}
+
+export interface Activity {
+  id: string;
+  boardId: string;
+  cardId: string | null;
+  userId: string;
+  action: string;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+  user: { id: string; name: string | null; email: string; image: string | null };
+}
+
+export interface Attachment {
+  id: string;
+  cardId: string;
+  userId: string;
+  fileName: string;
+  fileUrl: string;
+  fileSize: number;
+  mimeType: string;
+  createdAt: string;
+  user: { id: string; name: string | null; email: string };
+}
+
+export interface SavedFilter {
+  id: string;
+  boardId: string;
+  userId: string;
+  name: string;
+  filters: ActiveFilters;
+  createdAt: string;
+}

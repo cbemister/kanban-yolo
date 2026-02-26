@@ -8,21 +8,28 @@ datasource db {
 }
 
 model User {
-  id                 String         @id @default(cuid())
-  name               String?
-  email              String         @unique
-  emailVerified      DateTime?
-  image              String?
-  passwordHash       String?
-  accounts           Account[]
-  sessions           Session[]
-  boards             Board[]
-  assignedCards      CardAssignee[]
-  boardMembers       BoardMember[]
-  sentInvitations    Invitation[]   @relation("InvitedBy")
-  receivedInvitations Invitation[]  @relation("InvitedUser")
-  createdAt          DateTime       @default(now())
-  updatedAt          DateTime       @updatedAt
+  id                  String         @id @default(cuid())
+  name                String?
+  email               String         @unique
+  emailVerified       DateTime?
+  image               String?
+  passwordHash        String?
+  theme               String         @default("system")
+  accounts            Account[]
+  sessions            Session[]
+  boards              Board[]
+  assignedCards       CardAssignee[]
+  boardMembers        BoardMember[]
+  sentInvitations     Invitation[]   @relation("InvitedBy")
+  receivedInvitations Invitation[]   @relation("InvitedUser")
+  comments            Comment[]
+  activities          Activity[]
+  attachments         Attachment[]
+  notifications       Notification[]
+  savedFilters        SavedFilter[]
+  subscription        Subscription?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
 }
 
 model Account {
@@ -60,16 +67,18 @@ model VerificationToken {
 }
 
 model Board {
-  id          String        @id @default(cuid())
-  title       String
-  userId      String
-  columns     Column[]
-  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  labels      Label[]
-  members     BoardMember[]
-  invitations Invitation[]
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id           String        @id @default(cuid())
+  title        String
+  userId       String
+  columns      Column[]
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  labels       Label[]
+  members      BoardMember[]
+  invitations  Invitation[]
+  activities   Activity[]
+  savedFilters SavedFilter[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 
   @@index([userId])
 }
@@ -86,17 +95,19 @@ model Column {
 }
 
 model Card {
-  id        String         @id @default(cuid())
-  title     String
-  details   String         @default("")
-  position  Int
-  columnId  String
-  dueDate   DateTime?
-  column    Column         @relation(fields: [columnId], references: [id], onDelete: Cascade)
-  labels    CardLabel[]
-  assignees CardAssignee[]
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
+  id          String         @id @default(cuid())
+  title       String
+  details     String         @default("")
+  position    Int
+  columnId    String
+  dueDate     DateTime?
+  column      Column         @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  labels      CardLabel[]
+  assignees   CardAssignee[]
+  comments    Comment[]
+  attachments Attachment[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
   @@index([columnId])
 }
@@ -171,4 +182,89 @@ model Invitation {
   @@index([boardId])
   @@index([email])
   @@index([token])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  cardId    String
+  userId    String
+  card      Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([cardId])
+  @@index([userId])
+}
+
+model Activity {
+  id        String   @id @default(cuid())
+  boardId   String
+  cardId    String?
+  userId    String
+  action    String
+  metadata  Json     @default("{}")
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([boardId])
+  @@index([cardId])
+  @@index([userId])
+}
+
+model Attachment {
+  id        String   @id @default(cuid())
+  cardId    String
+  userId    String
+  fileName  String
+  fileUrl   String
+  fileSize  Int
+  mimeType  String
+  card      Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([cardId])
+  @@index([userId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  title     String
+  body      String
+  linkUrl   String?
+  read      Boolean  @default(false)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([userId, read])
+}
+
+model SavedFilter {
+  id        String   @id @default(cuid())
+  boardId   String
+  userId    String
+  name      String
+  filters   Json
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([boardId, userId])
+}
+
+model Subscription {
+  id                   String    @id @default(cuid())
+  userId               String    @unique
+  stripeCustomerId     String    @unique
+  stripeSubscriptionId String?   @unique
+  plan                 String    @default("free")
+  status               String    @default("active")
+  currentPeriodEnd     DateTime?
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

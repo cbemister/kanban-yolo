@@ -1,6 +1,6 @@
 "use client";
 
-import { use } from "react";
+import { use, Suspense } from "react";
 import Board from "@/components/Board";
 
 export default function BoardPage({
@@ -9,5 +9,9 @@ export default function BoardPage({
   params: Promise<{ boardId: string }>;
 }) {
   const { boardId } = use(params);
-  return <Board boardId={boardId} />;
+  return (
+    <Suspense>
+      <Board boardId={boardId} />
+    </Suspense>
+  );
 }
