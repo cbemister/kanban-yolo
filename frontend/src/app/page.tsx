@@ -1,9 +1,11 @@
-"use client";
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
 
-import dynamic from "next/dynamic";
-
-const Board = dynamic(() => import("@/components/Board"), { ssr: false });
-
-export default function Home() {
-  return <Board />;
+export default async function Home() {
+  const session = await auth();
+  if (session) {
+    redirect("/boards");
+  } else {
+    redirect("/login");
+  }
 }

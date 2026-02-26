@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { Card as CardType } from "@/types";
+import ConfirmDialog from "./ConfirmDialog";
 
 interface CardProps {
   card: CardType;
@@ -12,6 +14,8 @@ interface CardProps {
 }
 
 export default function Card({ card, columnId, onDelete, onClick }: CardProps) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
   const {
     attributes,
     listeners,
@@ -28,36 +32,47 @@ export default function Card({ card, columnId, onDelete, onClick }: CardProps) {
   };
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className="group relative bg-white rounded-lg shadow-sm p-3 cursor-grab active:cursor-grabbing border border-gray-100 hover:shadow-md transition-shadow"
-      onClick={() => !isDragging && onClick(card)}
-      {...attributes}
-      {...listeners}
-    >
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete(columnId, card.id);
-        }}
-        onPointerDown={(e) => e.stopPropagation()}
-        className="absolute top-2 right-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity w-5 h-5 rounded-full bg-gray-200 hover:bg-red-100 hover:text-red-600 flex items-center justify-center text-gray-500 text-xs"
-        aria-label="Delete card"
+    <>
+      <div
+        ref={setNodeRef}
+        style={style}
+        className="group relative bg-white rounded-lg shadow-sm p-3 cursor-grab active:cursor-grabbing border border-gray-100 hover:shadow-md transition-shadow"
+        onClick={() => !isDragging && onClick(card)}
+        {...attributes}
+        {...listeners}
       >
-        x
-      </button>
-      <h3 className="font-semibold text-sm text-gray-900 pr-7 mb-1 leading-snug">
-        {card.title}
-      </h3>
-      {card.details && (
-        <p
-          className="text-xs leading-relaxed line-clamp-2"
-          style={{ color: "#888888" }}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setConfirmDelete(true);
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
+          className="absolute top-2 right-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity w-5 h-5 rounded-full bg-gray-200 hover:bg-red-100 hover:text-red-600 flex items-center justify-center text-gray-500 text-xs"
+          aria-label="Delete card"
         >
-          {card.details}
-        </p>
+          x
+        </button>
+        <h3 className="font-semibold text-sm text-gray-900 pr-7 mb-1 leading-snug">
+          {card.title}
+        </h3>
+        {card.details && (
+          <p className="text-xs leading-relaxed line-clamp-2" style={{ color: "#888888" }}>
+            {card.details}
+          </p>
+        )}
+      </div>
+
+      {confirmDelete && (
+        <ConfirmDialog
+          title="Delete card"
+          message={`Are you sure you want to delete "${card.title}"?`}
+          onConfirm={() => {
+            onDelete(columnId, card.id);
+            setConfirmDelete(false);
+          }}
+          onCancel={() => setConfirmDelete(false)}
+        />
       )}
-    </div>
+    </>
   );
 }

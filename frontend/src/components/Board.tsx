@@ -1,6 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { signOut } from "next-auth/react";
+import Link from "next/link";
+import toast from "react-hot-toast";
 import {
   DndContext,
   DragOverlay,
@@ -12,7 +16,7 @@ import {
 import type { DragStartEvent, DragOverEvent, DragEndEvent } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
 import type { Column as ColumnType, Card as CardType } from "@/types";
-import { initialColumns } from "@/data/dummy";
+import { useBoard } from "@/hooks/useBoard";
 import Column from "./Column";
 import AddCardModal from "./AddCardModal";
 import CardDetailModal from "./CardDetailModal";
@@ -35,11 +39,21 @@ function CardOverlay({ card }: { card: CardType }) {
   );
 }
 
-export default function Board() {
-  const [columns, setColumns] = useState<ColumnType[]>(initialColumns);
+interface BoardProps {
+  boardId: string;
+}
+
+export default function Board({ boardId }: BoardProps) {
+  const queryClient = useQueryClient();
+  const { data: boardData, isLoading, error } = useBoard(boardId);
+  const [columns, setColumns] = useState<ColumnType[]>([]);
   const [activeCard, setActiveCard] = useState<CardType | null>(null);
   const [addCardTarget, setAddCardTarget] = useState<string | null>(null);
   const [viewCard, setViewCard] = useState<CardType | null>(null);
+
+  useEffect(() => {
+    if (boardData) setColumns(boardData.columns);
+  }, [boardData]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -81,39 +95,42 @@ export default function Board() {
     const overColumnId = isColumnId(overId) ? overId : findColumnByCardId(overId)?.id;
     if (!overColumnId || overColumnId === activeColumn.id) return;
 
+    const overColumn = columns.find((c) => c.id === overColumnId);
+    let insertIndex = overColumn?.cards.length ?? 0;
+    if (!isColumnId(overId)) {
+      const idx = overColumn?.cards.findIndex((c) => c.id === overId) ?? -1;
+      if (idx !== -1) insertIndex = idx;
+    }
+
     setColumns((cols) => {
       const activeColIndex = cols.findIndex((c) => c.id === activeColumn.id);
       const overColIndex = cols.findIndex((c) => c.id === overColumnId);
-
-      const activeCardIndex = cols[activeColIndex].cards.findIndex(
-        (c) => c.id === activeId
-      );
+      const activeCardIndex = cols[activeColIndex].cards.findIndex((c) => c.id === activeId);
       const draggedCard = cols[activeColIndex].cards[activeCardIndex];
 
-      let insertIndex = cols[overColIndex].cards.length;
+      let idx = cols[overColIndex].cards.length;
       if (!isColumnId(overId)) {
-        const overCardIndex = cols[overColIndex].cards.findIndex(
-          (c) => c.id === overId
-        );
-        if (overCardIndex !== -1) insertIndex = overCardIndex;
+        const oIdx = cols[overColIndex].cards.findIndex((c) => c.id === overId);
+        if (oIdx !== -1) idx = oIdx;
       }
 
-      const newCols = cols.map((col, i) => {
-        if (i === activeColIndex) {
-          return {
-            ...col,
-            cards: col.cards.filter((c) => c.id !== activeId),
-          };
-        }
+      return cols.map((col, i) => {
+        if (i === activeColIndex) return { ...col, cards: col.cards.filter((c) => c.id !== activeId) };
         if (i === overColIndex) {
           const newCards = [...col.cards];
-          newCards.splice(insertIndex, 0, draggedCard);
+          newCards.splice(idx, 0, draggedCard);
           return { ...col, cards: newCards };
         }
         return col;
       });
+    });
 
-      return newCols;
+    fetch("/api/cards/move", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cardId: activeId, targetColumnId: overColumnId, position: insertIndex }),
+    }).catch(() => {
+      queryClient.invalidateQueries({ queryKey: ["board", boardId] });
     });
   }
 
@@ -127,70 +144,148 @@ export default function Board() {
 
     if (activeId === overId) return;
 
-    setColumns((cols) => {
-      const activeCol = cols.find((col) =>
-        col.cards.some((c) => c.id === activeId)
-      );
-      const overCol = isColumnId(overId)
-        ? cols.find((c) => c.id === overId)
-        : cols.find((col) => col.cards.some((c) => c.id === overId));
+    const activeCol = columns.find((col) => col.cards.some((c) => c.id === activeId));
+    const overCol = isColumnId(overId)
+      ? columns.find((c) => c.id === overId)
+      : columns.find((col) => col.cards.some((c) => c.id === overId));
 
-      if (!activeCol || !overCol || activeCol.id !== overCol.id) return cols;
+    if (!activeCol || !overCol || activeCol.id !== overCol.id) return;
 
-      const oldIndex = activeCol.cards.findIndex((c) => c.id === activeId);
-      const newIndex = activeCol.cards.findIndex((c) => c.id === overId);
+    const oldIndex = activeCol.cards.findIndex((c) => c.id === activeId);
+    const newIndex = activeCol.cards.findIndex((c) => c.id === overId);
 
-      if (oldIndex === -1 || newIndex === -1) return cols;
+    if (oldIndex === -1 || newIndex === -1) return;
 
-      return cols.map((col) => {
-        if (col.id !== activeCol.id) return col;
-        return { ...col, cards: arrayMove(col.cards, oldIndex, newIndex) };
-      });
+    const newCards = arrayMove(activeCol.cards, oldIndex, newIndex);
+
+    setColumns((cols) =>
+      cols.map((col) => (col.id !== activeCol.id ? col : { ...col, cards: newCards }))
+    );
+
+    fetch("/api/cards/reorder", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ columnId: activeCol.id, cardIds: newCards.map((c) => c.id) }),
+    }).catch(() => {
+      queryClient.invalidateQueries({ queryKey: ["board", boardId] });
     });
   }
 
-  function addCard(columnId: string, title: string, details: string) {
-    const newCard: CardType = {
-      id: `card-${Date.now()}`,
-      title,
-      details,
-    };
+  async function addCard(columnId: string, title: string, details: string) {
+    const res = await fetch("/api/cards", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ columnId, title, details }),
+    });
+    if (!res.ok) { toast.error("Failed to add card"); return; }
+    const card: CardType = await res.json();
     setColumns((cols) =>
-      cols.map((col) =>
-        col.id === columnId ? { ...col, cards: [...col.cards, newCard] } : col
-      )
+      cols.map((col) => col.id === columnId ? { ...col, cards: [...col.cards, card] } : col)
     );
   }
 
-  function deleteCard(columnId: string, cardId: string) {
+  async function deleteCard(columnId: string, cardId: string) {
     setColumns((cols) =>
       cols.map((col) =>
-        col.id === columnId
-          ? { ...col, cards: col.cards.filter((c) => c.id !== cardId) }
-          : col
+        col.id === columnId ? { ...col, cards: col.cards.filter((c) => c.id !== cardId) } : col
       )
+    );
+    const res = await fetch(`/api/cards/${cardId}`, { method: "DELETE" });
+    if (!res.ok) {
+      toast.error("Failed to delete card");
+      queryClient.invalidateQueries({ queryKey: ["board", boardId] });
+    }
+  }
+
+  async function updateCard(updated: CardType) {
+    const res = await fetch(`/api/cards/${updated.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: updated.title, details: updated.details }),
+    });
+    if (!res.ok) { toast.error("Failed to save card"); return; }
+    setColumns((cols) =>
+      cols.map((col) => ({
+        ...col,
+        cards: col.cards.map((c) => (c.id === updated.id ? updated : c)),
+      }))
+    );
+    if (viewCard?.id === updated.id) setViewCard(updated);
+  }
+
+  async function renameColumn(columnId: string, newTitle: string) {
+    setColumns((cols) =>
+      cols.map((col) => (col.id === columnId ? { ...col, title: newTitle } : col))
+    );
+    const res = await fetch(`/api/columns/${columnId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: newTitle }),
+    });
+    if (!res.ok) {
+      toast.error("Failed to rename column");
+      queryClient.invalidateQueries({ queryKey: ["board", boardId] });
+    }
+  }
+
+  async function deleteColumn(columnId: string) {
+    setColumns((cols) => cols.filter((col) => col.id !== columnId));
+    const res = await fetch(`/api/columns/${columnId}`, { method: "DELETE" });
+    if (!res.ok) {
+      toast.error("Failed to delete column");
+      queryClient.invalidateQueries({ queryKey: ["board", boardId] });
+    }
+  }
+
+  async function addColumn() {
+    const res = await fetch("/api/columns", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ boardId, title: "New Column" }),
+    });
+    if (!res.ok) { toast.error("Failed to add column"); return; }
+    const newColumn = await res.json();
+    setColumns((cols) => [...cols, { ...newColumn, cards: [] }]);
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex h-dvh items-center justify-center" style={{ background: "#032147" }}>
+        <span className="text-white/60 text-sm">Loading board...</span>
+      </div>
     );
   }
 
-  function renameColumn(columnId: string, newTitle: string) {
-    setColumns((cols) =>
-      cols.map((col) =>
-        col.id === columnId ? { ...col, title: newTitle } : col
-      )
+  if (error) {
+    return (
+      <div className="flex h-dvh items-center justify-center gap-4 flex-col" style={{ background: "#032147" }}>
+        <span className="text-white/60 text-sm">Failed to load board.</span>
+        <Link href="/boards" className="text-sm font-medium" style={{ color: "#209dd7" }}>Back to boards</Link>
+      </div>
     );
   }
 
   return (
     <div className="flex flex-col h-dvh" style={{ background: "#032147" }}>
       {/* Header */}
-      <header className="flex items-center px-4 sm:px-8 py-4 border-b border-white/10 flex-shrink-0">
-        <div
-          className="w-1 h-8 rounded-full mr-3"
-          style={{ background: "#ecad0a" }}
-        />
-        <h1 className="text-2xl font-bold text-white tracking-tight">
-          Kanban Board
-        </h1>
+      <header className="flex items-center justify-between px-4 sm:px-8 py-4 border-b border-white/10 flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <Link href="/boards" className="text-white/60 hover:text-white transition-colors mr-1" title="All boards">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 12H5M12 19l-7-7 7-7" />
+            </svg>
+          </Link>
+          <div className="w-1 h-8 rounded-full" style={{ background: "#ecad0a" }} />
+          <h1 className="text-xl font-bold text-white tracking-tight truncate max-w-xs sm:max-w-md">
+            {boardData?.title ?? "Board"}
+          </h1>
+        </div>
+        <button
+          onClick={() => signOut({ callbackUrl: "/login" })}
+          className="text-sm text-white/60 hover:text-white transition-colors"
+        >
+          Sign out
+        </button>
       </header>
 
       {/* Board */}
@@ -210,9 +305,20 @@ export default function Board() {
                 onAddCard={(columnId) => setAddCardTarget(columnId)}
                 onDeleteCard={deleteCard}
                 onRenameColumn={renameColumn}
+                onDeleteColumn={deleteColumn}
                 onViewCard={(card) => setViewCard(card)}
               />
             ))}
+            <div className="flex-shrink-0 flex items-start pt-1 snap-center">
+              <button
+                onClick={addColumn}
+                className="flex flex-col items-center justify-center w-16 h-16 rounded-xl border-2 border-dashed border-white/30 text-white/70 hover:border-white/60 hover:text-white transition-colors"
+                aria-label="Add column"
+              >
+                <span className="text-2xl leading-none">+</span>
+                <span className="text-xs mt-1">Column</span>
+              </button>
+            </div>
           </div>
         </div>
         <DragOverlay>
@@ -231,6 +337,7 @@ export default function Board() {
         <CardDetailModal
           card={viewCard}
           onClose={() => setViewCard(null)}
+          onSave={updateCard}
         />
       )}
     </div>
