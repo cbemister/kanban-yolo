@@ -8,10 +8,10 @@ Full-stack Kanban SaaS app. Multi-board, drag-and-drop cards, collaboration with
 
 All application code lives in the `frontend/` subdirectory (Next.js 15).
 
-Detailed references:
-- @frontend/CLAUDE-schema.md — database models and migration notes
-- @frontend/CLAUDE-api.md — API route inventory
-- @frontend/CLAUDE-frontend.md — components, hooks, pages, and key patterns
+Detailed references (auto-loaded from `.claude/rules/`):
+- `.claude/rules/schema.md` — database models and migration notes
+- `.claude/rules/api.md` — API route inventory with file paths
+- `.claude/rules/frontend.md` — components, hooks, pages, lib files, and key patterns
 
 ## Tech Stack
 
@@ -23,6 +23,11 @@ Detailed references:
 - Pusher + pusher-js (real-time)
 - Resend (email)
 - date-fns + react-day-picker
+- Stripe (billing — checkout, portal, webhooks)
+- AWS S3 (file attachments via presigned upload URLs)
+- Inngest (background jobs — assignment notifications, due-date reminders)
+- cmdk (command palette)
+- next-themes (dark/light/system theme)
 
 ## Common Commands
 
