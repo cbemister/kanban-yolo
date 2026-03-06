@@ -31,48 +31,43 @@ export default function BillingPage() {
   }
 
   return (
-    <main className="min-h-screen px-4 py-12 max-w-2xl mx-auto">
-      <Link href="/boards" className="text-sm mb-6 inline-block" style={{ color: "#209dd7" }}>
+    <main
+      className="min-h-screen px-4 py-12 max-w-2xl mx-auto"
+      style={{ position: "relative", zIndex: 1 }}
+    >
+      <Link
+        href="/boards"
+        className="text-sm mb-6 inline-block"
+        style={{ color: "var(--accent)" }}
+      >
         Back to boards
       </Link>
-      <h1 className="text-2xl font-bold mb-6" style={{ color: "#032147" }}>Billing</h1>
+      <h1 className="heading-serif mb-6" style={{ fontSize: 32 }}>Billing</h1>
       {loading ? (
-        <p className="text-sm" style={{ color: "#888888" }}>Loading...</p>
+        <p className="text-sm" style={{ color: "var(--text-muted)" }}>Loading...</p>
       ) : sub ? (
-        <div className="border rounded-xl p-6">
-          <p className="text-sm font-semibold mb-1" style={{ color: "#888888" }}>Current plan</p>
-          <p className="text-2xl font-bold capitalize mb-4" style={{ color: "#032147" }}>{sub.plan}</p>
+        <div className="p-6" style={{ border: "1px solid var(--border-color)" }}>
+          <p className="text-section-title mb-1">Current plan</p>
+          <p className="heading-serif capitalize mb-4" style={{ fontSize: 28 }}>{sub.plan}</p>
           {sub.currentPeriodEnd && (
-            <p className="text-sm mb-4" style={{ color: "#888888" }}>
+            <p className="text-sm mb-4" style={{ color: "var(--text-muted)" }}>
               Renews {new Date(sub.currentPeriodEnd).toLocaleDateString()}
             </p>
           )}
           {sub.plan === "pro" ? (
-            <button
-              onClick={openPortal}
-              className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 hover:bg-gray-200 transition-colors"
-              style={{ color: "#032147" }}
-            >
+            <button onClick={openPortal} className="btn btn-secondary">
               Manage subscription
             </button>
           ) : (
-            <Link
-              href="/pricing"
-              className="inline-block px-4 py-2 rounded-lg text-sm font-medium text-white transition-opacity hover:opacity-90"
-              style={{ background: "#753991" }}
-            >
+            <Link href="/pricing" className="btn btn-primary">
               Upgrade to Pro
             </Link>
           )}
         </div>
       ) : (
-        <div className="border rounded-xl p-6">
-          <p className="text-sm mb-4" style={{ color: "#888888" }}>You are on the Free plan.</p>
-          <Link
-            href="/pricing"
-            className="inline-block px-4 py-2 rounded-lg text-sm font-medium text-white"
-            style={{ background: "#753991" }}
-          >
+        <div className="p-6" style={{ border: "1px solid var(--border-color)" }}>
+          <p className="text-sm mb-4" style={{ color: "var(--text-muted)" }}>You are on the Free plan.</p>
+          <Link href="/pricing" className="btn btn-primary">
             Upgrade to Pro
           </Link>
         </div>

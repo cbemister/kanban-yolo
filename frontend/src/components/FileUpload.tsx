@@ -15,7 +15,6 @@ export default function FileUpload({ cardId, onUploaded }: FileUploadProps) {
   async function uploadFile(file: File) {
     setUploading(true);
     try {
-      // Get presigned URL
       const urlRes = await fetch(`/api/cards/${cardId}/attachments/upload-url`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -28,7 +27,6 @@ export default function FileUpload({ cardId, onUploaded }: FileUploadProps) {
       }
       const { uploadUrl, publicUrl } = await urlRes.json();
 
-      // Upload to S3 via presigned PUT
       const s3Res = await fetch(uploadUrl, {
         method: "PUT",
         headers: { "Content-Type": file.type },
@@ -36,7 +34,6 @@ export default function FileUpload({ cardId, onUploaded }: FileUploadProps) {
       });
       if (!s3Res.ok) { toast.error("Upload to storage failed"); return; }
 
-      // Create attachment record
       await fetch(`/api/cards/${cardId}/attachments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -64,7 +61,11 @@ export default function FileUpload({ cardId, onUploaded }: FileUploadProps) {
       onDragLeave={() => setDragging(false)}
       onDrop={handleDrop}
       onClick={() => inputRef.current?.click()}
-      className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${dragging ? "border-blue-400 bg-blue-50" : "border-gray-200 hover:border-gray-300"}`}
+      className="p-4 text-center cursor-pointer transition-colors"
+      style={{
+        border: `2px dashed ${dragging ? "var(--accent)" : "var(--border-color)"}`,
+        background: dragging ? "var(--bg-card-hover)" : "transparent",
+      }}
     >
       <input
         ref={inputRef}
@@ -73,13 +74,9 @@ export default function FileUpload({ cardId, onUploaded }: FileUploadProps) {
         onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadFile(f); }}
         accept="image/*,.pdf,.doc,.docx,.txt,.csv"
       />
-      {uploading ? (
-        <p className="text-sm" style={{ color: "#888888" }}>Uploading...</p>
-      ) : (
-        <p className="text-sm" style={{ color: "#888888" }}>
-          Drop a file or click to upload (max 10 MB)
-        </p>
-      )}
+      <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+        {uploading ? "Uploading..." : "Drop a file or click to upload (max 10 MB)"}
+      </p>
     </div>
   );
 }

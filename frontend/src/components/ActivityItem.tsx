@@ -32,16 +32,19 @@ export default function ActivityItem({ activity }: ActivityItemProps) {
   const description = formatAction(activity.action, activity.metadata);
 
   return (
-    <div className="flex gap-3 py-3 border-b border-gray-100 last:border-0">
+    <div
+      className="flex gap-3 py-3"
+      style={{ borderBottom: "1px solid var(--border-light)" }}
+    >
       <div className="flex-shrink-0">
         <UserAvatar user={activity.user} size="sm" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm" style={{ color: "#032147" }}>
-          <span className="font-semibold">{userName}</span>{" "}
+        <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+          <span className="font-semibold" style={{ color: "var(--text-primary)" }}>{userName}</span>{" "}
           <span>{description}</span>
         </p>
-        <p className="text-xs mt-0.5" style={{ color: "#888888" }}>
+        <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
           {formatDistanceToNow(new Date(activity.createdAt), { addSuffix: true })}
         </p>
       </div>

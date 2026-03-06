@@ -44,14 +44,13 @@ export default function InviteForm({ boardId, onSuccess }: InviteFormProps) {
         onChange={(e) => setEmail(e.target.value)}
         placeholder="Email address"
         required
-        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
-        style={{ "--tw-ring-color": "#209dd7" } as React.CSSProperties}
+        className="input flex-1"
       />
       <select
         value={role}
         onChange={(e) => setRole(e.target.value as "EDITOR" | "VIEWER")}
-        className="border border-gray-300 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2"
-        style={{ "--tw-ring-color": "#209dd7" } as React.CSSProperties}
+        className="input"
+        style={{ width: "auto" }}
       >
         <option value="EDITOR">Editor</option>
         <option value="VIEWER">Viewer</option>
@@ -59,8 +58,7 @@ export default function InviteForm({ boardId, onSuccess }: InviteFormProps) {
       <button
         type="submit"
         disabled={loading || !email.trim()}
-        className="px-4 py-2 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
-        style={{ background: "#753991" }}
+        className="btn btn-primary"
       >
         {loading ? "Sending..." : "Invite"}
       </button>

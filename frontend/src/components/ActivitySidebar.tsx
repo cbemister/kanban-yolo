@@ -56,34 +56,64 @@ export default function ActivitySidebar({ boardId, isOpen, onClose }: ActivitySi
       {/* Backdrop */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-40"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: "var(--z-sidebar)" as unknown as number,
+          }}
           onClick={onClose}
         />
       )}
 
       {/* Sidebar */}
       <div
-        className="fixed top-0 right-0 h-full w-80 bg-white shadow-2xl z-50 flex flex-col transition-transform duration-300"
-        style={{ transform: isOpen ? "translateX(0)" : "translateX(100%)" }}
+        style={{
+          position: "fixed",
+          top: 0,
+          right: 0,
+          height: "100%",
+          width: "320px",
+          background: "var(--bg-base)",
+          borderLeft: "1px solid var(--border-color)",
+          zIndex: "calc(var(--z-sidebar) + 1)" as unknown as number,
+          display: "flex",
+          flexDirection: "column",
+          transform: isOpen ? "translateX(0)" : "translateX(100%)",
+          transition: "transform 300ms linear",
+        }}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
-          <h2 className="text-base font-bold" style={{ color: "#032147" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "20px 20px 16px",
+            borderBottom: "1px solid var(--border-light)",
+            flexShrink: 0,
+          }}
+        >
+          <h2
+            className="heading-serif"
+            style={{ fontSize: "28px", lineHeight: 1.1 }}
+          >
             Activity
           </h2>
           <button
             onClick={onClose}
-            className="w-7 h-7 rounded-full flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-colors text-gray-500 hover:text-gray-800 text-sm font-bold"
+            className="btn-icon"
             aria-label="Close activity"
           >
-            x
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 py-3">
+        <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px" }}>
           {isLoading && allActivities.length === 0 ? (
-            <p className="text-sm" style={{ color: "#888888" }}>Loading activity...</p>
+            <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>Loading activity...</p>
           ) : allActivities.length === 0 ? (
-            <p className="text-sm italic" style={{ color: "#888888" }}>No activity yet.</p>
+            <p style={{ fontSize: "13px", fontStyle: "italic", color: "var(--text-muted)" }}>No activity yet.</p>
           ) : (
             <>
               {allActivities.map((activity) => (
@@ -92,8 +122,8 @@ export default function ActivitySidebar({ boardId, isOpen, onClose }: ActivitySi
               {data?.nextCursor && (
                 <button
                   onClick={() => setCursor(data.nextCursor)}
-                  className="mt-3 text-sm transition-colors"
-                  style={{ color: "#209dd7" }}
+                  className="btn btn-ghost"
+                  style={{ marginTop: "12px", width: "100%" }}
                 >
                   Load more
                 </button>

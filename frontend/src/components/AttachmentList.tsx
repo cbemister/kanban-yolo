@@ -41,17 +41,24 @@ export default function AttachmentList({ cardId, currentUserId }: AttachmentList
     setAttachments((prev) => prev.filter((a) => a.id !== id));
   }
 
-  if (loading) return <p className="text-xs" style={{ color: "#888888" }}>Loading...</p>;
-  if (!attachments.length) return <p className="text-xs italic" style={{ color: "#888888" }}>No attachments.</p>;
+  if (loading) return <p className="text-xs" style={{ color: "var(--text-muted)" }}>Loading...</p>;
+  if (!attachments.length) return <p className="text-xs italic" style={{ color: "var(--text-muted)" }}>No attachments.</p>;
 
   return (
     <ul className="space-y-2">
       {attachments.map((a) => (
-        <li key={a.id} className="flex items-center gap-3 p-2 rounded-lg border border-gray-100 bg-gray-50">
+        <li
+          key={a.id}
+          className="flex items-center gap-3 p-2"
+          style={{ border: "1px solid var(--border-light)", background: "var(--bg-surface)" }}
+        >
           {a.mimeType.startsWith("image/") ? (
-            <img src={a.fileUrl} alt={a.fileName} className="w-10 h-10 object-cover rounded" />
+            <img src={a.fileUrl} alt={a.fileName} className="w-10 h-10 object-cover flex-shrink-0" />
           ) : (
-            <div className="w-10 h-10 rounded bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-500 uppercase">
+            <div
+              className="w-10 h-10 flex items-center justify-center text-xs font-bold uppercase flex-shrink-0"
+              style={{ background: "var(--bg-card)", color: "var(--text-muted)" }}
+            >
               {a.fileName.split(".").pop() ?? "?"}
             </div>
           )}
@@ -61,16 +68,17 @@ export default function AttachmentList({ cardId, currentUserId }: AttachmentList
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm font-medium truncate block hover:underline"
-              style={{ color: "#209dd7" }}
+              style={{ color: "var(--accent)" }}
             >
               {a.fileName}
             </a>
-            <p className="text-xs" style={{ color: "#888888" }}>{formatBytes(a.fileSize)}</p>
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>{formatBytes(a.fileSize)}</p>
           </div>
           {a.user.id === currentUserId && (
             <button
               onClick={() => handleDelete(a.id)}
-              className="text-xs text-red-500 hover:text-red-700 transition-colors flex-shrink-0"
+              className="btn-ghost text-xs flex-shrink-0"
+              style={{ color: "var(--accent-danger)" }}
               aria-label="Delete"
             >
               Remove

@@ -48,34 +48,49 @@ export default function InvitationPage({ params }: InvitationPageProps) {
   }
 
   return (
-    <div className="min-h-dvh flex items-center justify-center" style={{ background: "#032147" }}>
-      <div className="bg-white rounded-xl shadow-xl p-8 w-full max-w-md mx-4">
-        <div className="mb-1 w-1 h-8 rounded-full" style={{ background: "#ecad0a" }} />
-        <h1 className="text-2xl font-bold mb-2" style={{ color: "#032147" }}>
-          Board Invitation
-        </h1>
-        <p className="mb-8" style={{ color: "#888888" }}>
+    <div
+      className="min-h-dvh flex items-center justify-center px-4"
+      style={{ position: "relative", zIndex: 1 }}
+    >
+      <div className="modal-panel modal-panel-sm p-8">
+        <div className="mb-8">
+          <h1
+            className="heading-serif mb-2"
+            style={{ fontSize: 28, letterSpacing: "-0.02em" }}
+          >
+            Board Invitation
+          </h1>
+          <hr className="title-rule" />
+        </div>
+        <p className="mb-8" style={{ color: "var(--text-secondary)", fontSize: 14, lineHeight: 1.7 }}>
           You have been invited to collaborate on a Kanban board. Accept to join or decline to dismiss this invitation.
         </p>
 
         {error && (
-          <p className="mb-4 text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>
+          <p
+            className="mb-4 text-sm px-3 py-2"
+            style={{
+              color: "var(--accent-danger)",
+              border: "1px solid var(--accent-danger)",
+              background: "transparent",
+            }}
+          >
+            {error}
+          </p>
         )}
 
         <div className="flex gap-3">
           <button
             onClick={handleAccept}
             disabled={accepting || declining}
-            className="flex-1 py-2.5 rounded-lg font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
-            style={{ background: "#753991" }}
+            className="btn btn-primary flex-1"
           >
             {accepting ? "Accepting..." : "Accept"}
           </button>
           <button
             onClick={handleDecline}
             disabled={accepting || declining}
-            className="flex-1 py-2.5 rounded-lg font-semibold transition-colors bg-gray-100 hover:bg-gray-200 disabled:opacity-60"
-            style={{ color: "#888888" }}
+            className="btn btn-secondary flex-1"
           >
             {declining ? "Declining..." : "Decline"}
           </button>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import type { ActiveFilters } from "@/types";
@@ -37,10 +37,28 @@ export default function BoardToolbar({
   const [searchQuery, setSearchQuery] = useState("");
   const [shareOpen, setShareOpen] = useState(false);
   const [activityOpen, setActivityOpen] = useState(false);
+  const [compact, setCompact] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const { data: searchResults = [] } = useSearch(boardId, searchQuery);
 
   const showResults = searchQuery.length >= 1;
+
+  useEffect(() => {
+    let ticking = false;
+
+    function onScroll() {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          setCompact(window.scrollY > 100);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    }
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   function handleSearchResultClick(card: SearchResult) {
     setSearchQuery("");
@@ -49,21 +67,59 @@ export default function BoardToolbar({
 
   return (
     <>
-      <header className="flex items-center gap-3 px-4 sm:px-6 py-3 border-b border-white/10 flex-shrink-0 flex-wrap">
-        <div className="flex items-center gap-3 min-w-0 flex-1">
-          <Link href="/boards" className="text-white/60 hover:text-white transition-colors flex-shrink-0" title="All boards">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <header className={`sticky-toolbar${compact ? " compact" : ""}`}>
+        {/* Left: back link + board title */}
+        <div className="toolbar-left">
+          <Link
+            href="/boards"
+            className="toolbar-back"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              fontSize: "12px",
+              color: "var(--text-muted)",
+              transition: "color var(--transition-fast)",
+              marginBottom: "12px",
+            }}
+            title="All boards"
+            onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text-primary)")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-muted)")}
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ flexShrink: 0 }}
+            >
               <path d="M19 12H5M12 19l-7-7 7-7" />
             </svg>
+            <span className="text-section-title">All boards</span>
           </Link>
-          <div className="w-1 h-7 rounded-full flex-shrink-0" style={{ background: "#ecad0a" }} />
-          <h1 className="text-lg font-bold text-white tracking-tight truncate">
+
+          <h1
+            className="heading-serif toolbar-title"
+            style={{
+              fontSize: "clamp(32px, 5vw, 48px)",
+              letterSpacing: "-0.03em",
+              lineHeight: 1.1,
+              transition: "font-size var(--transition-fast)",
+            }}
+          >
             {boardTitle}
           </h1>
+          <hr className="title-rule" style={{ marginTop: "10px" }} />
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
-          <div ref={searchRef} className="relative">
+        {/* Right: search + presence + actions */}
+        <div style={{ display: "flex", alignItems: "center", gap: "20px", flexWrap: "wrap" }}>
+          {/* Search */}
+          <div ref={searchRef} style={{ position: "relative" }}>
             <SearchBar
               value={searchQuery}
               onChange={setSearchQuery}
@@ -82,29 +138,69 @@ export default function BoardToolbar({
 
           <PresenceIndicator boardId={boardId} />
 
+          {/* Activity toggle */}
           <button
             type="button"
             onClick={() => setActivityOpen(true)}
-            className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg transition-colors text-white/70 hover:text-white hover:bg-white/10"
+            className="btn-icon"
             title="Activity feed"
+            aria-label="Activity feed"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <circle cx="12" cy="12" r="10" />
               <polyline points="12 6 12 12 16 14" />
             </svg>
-            Activity
           </button>
 
           <NotificationBell />
 
+          {/* Share link */}
           {currentUserRole === "OWNER" && (
             <button
               type="button"
               onClick={() => setShareOpen(true)}
-              className="text-sm font-medium px-3 py-1.5 rounded-lg transition-opacity hover:opacity-90 text-white"
-              style={{ background: "#753991" }}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                fontSize: "13px",
+                fontWeight: 500,
+                color: "var(--accent)",
+                padding: "4px 0",
+                position: "relative",
+                transition: "color var(--transition-fast)",
+              }}
+              onMouseEnter={(e) => {
+                const el = e.currentTarget.querySelector("span") as HTMLElement | null;
+                if (el) el.style.width = "100%";
+              }}
+              onMouseLeave={(e) => {
+                const el = e.currentTarget.querySelector("span") as HTMLElement | null;
+                if (el) el.style.width = "0%";
+              }}
             >
               Share
+              <span
+                style={{
+                  position: "absolute",
+                  bottom: 0,
+                  left: 0,
+                  height: "1px",
+                  width: "0%",
+                  background: "var(--accent)",
+                  transition: "width var(--transition-fast)",
+                  display: "block",
+                }}
+              />
             </button>
           )}
 
@@ -112,7 +208,8 @@ export default function BoardToolbar({
 
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
-            className="text-sm text-white/60 hover:text-white transition-colors"
+            className="btn-ghost text-section-title"
+            style={{ fontSize: "10px" }}
           >
             Sign out
           </button>
@@ -128,11 +225,13 @@ export default function BoardToolbar({
         />
       )}
 
-      <ActivitySidebar
-        boardId={boardId}
-        isOpen={activityOpen}
-        onClose={() => setActivityOpen(false)}
-      />
+      {activityOpen && (
+        <ActivitySidebar
+          boardId={boardId}
+          isOpen={activityOpen}
+          onClose={() => setActivityOpen(false)}
+        />
+      )}
     </>
   );
 }

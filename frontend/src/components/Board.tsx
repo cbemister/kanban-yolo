@@ -29,18 +29,29 @@ import { useHotkeys } from "@/hooks/useHotkeys";
 import { useUndoRedo } from "@/hooks/useUndoRedo";
 import CommandPalette from "./CommandPalette";
 import ShortcutsHelp from "./ShortcutsHelp";
+import TitleBlockFooter from "./TitleBlockFooter";
 
 function CardOverlay({ card }: { card: CardType }) {
   return (
     <div
-      className="bg-white rounded-lg shadow-xl p-3 border border-gray-100 rotate-2 scale-105 w-[85vw] sm:w-72"
-      style={{ opacity: 0.9 }}
+      className="editorial-card p-3 w-64 sm:w-72"
+      style={{ opacity: 0.9, transform: "rotate(2deg) scale(1.05)" }}
     >
-      <h3 className="font-semibold text-sm text-gray-900 pr-6 mb-1 leading-snug">
+      <h3
+        style={{
+          fontFamily: "var(--font-serif)",
+          fontSize: 15,
+          fontWeight: 400,
+          lineHeight: 1.35,
+          color: "var(--text-primary)",
+          paddingRight: 24,
+          marginBottom: 4,
+        }}
+      >
         {card.title}
       </h3>
       {card.details && (
-        <p className="text-xs leading-relaxed line-clamp-2" style={{ color: "#888888" }}>
+        <p className="line-clamp-2" style={{ fontSize: 13, color: "var(--text-secondary)" }}>
           {card.details}
         </p>
       )}
@@ -289,7 +300,7 @@ export default function Board({ boardId }: BoardProps) {
       },
     });
 
-    toast.success("Card deleted — press Ctrl+Z to undo");
+    toast.success("Card deleted -- press Ctrl+Z to undo");
   }
 
   async function updateCard(updated: CardType) {
@@ -354,12 +365,10 @@ export default function Board({ boardId }: BoardProps) {
   }
 
   function handleSearchResultClick(result: SearchResult) {
-    // Find the card in the columns
     for (const col of columns) {
       const card = col.cards.find((c) => c.id === result.id);
       if (card) { setViewCard(card); return; }
     }
-    // If filtered out, open with the result data mapped to Card type
     setViewCard({
       id: result.id,
       title: result.title,
@@ -441,29 +450,35 @@ export default function Board({ boardId }: BoardProps) {
 
   if (isLoading) {
     return (
-      <div className="flex h-dvh items-center justify-center" style={{ background: "#032147" }}>
-        <span className="text-white/60 text-sm">Loading board...</span>
+      <div
+        className="flex h-dvh items-center justify-center"
+        style={{ position: "relative", zIndex: 1 }}
+      >
+        <span style={{ color: "var(--text-muted)", fontSize: 14 }}>Loading board...</span>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex h-dvh items-center justify-center gap-4 flex-col" style={{ background: "#032147" }}>
-        <span className="text-white/60 text-sm">Failed to load board.</span>
-        <Link href="/boards" className="text-sm font-medium" style={{ color: "#209dd7" }}>Back to boards</Link>
+      <div
+        className="flex h-dvh items-center justify-center gap-4 flex-col"
+        style={{ position: "relative", zIndex: 1 }}
+      >
+        <span style={{ color: "var(--text-muted)", fontSize: 14 }}>Failed to load board.</span>
+        <Link href="/boards" style={{ color: "var(--accent)", fontSize: 14, fontWeight: 500 }}>Back to boards</Link>
       </div>
     );
   }
 
   const currentUserId = session?.user?.id ?? "";
-  // Determine current user role: if board owner, OWNER; else check members
   const currentUserRole = boardData?.ownerId === currentUserId ? "OWNER" : "EDITOR";
 
   const filteredColumns = applyFilters(columns, filters);
+  const totalTasks = columns.reduce((sum, col) => sum + col.cards.length, 0);
 
   return (
-    <div className="flex flex-col h-dvh" style={{ background: "#032147" }}>
+    <div className="flex flex-col min-h-dvh" style={{ position: "relative", zIndex: 1 }}>
       <BoardToolbar
         boardId={boardId}
         boardTitle={boardData?.title ?? "Board"}
@@ -474,7 +489,6 @@ export default function Board({ boardId }: BoardProps) {
         onSearchResultClick={handleSearchResultClick}
       />
 
-      {/* Board */}
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
@@ -482,8 +496,8 @@ export default function Board({ boardId }: BoardProps) {
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex-1 overflow-x-auto overflow-y-hidden scrollbar-hide snap-x snap-mandatory">
-          <div className="flex gap-4 sm:gap-5 p-4 sm:p-6 h-full items-stretch">
+        <div className="flex-1 overflow-y-auto scrollbar-hide">
+          <div className="board-content">
             {filteredColumns.map((col) => (
               <Column
                 key={col.id}
@@ -495,14 +509,31 @@ export default function Board({ boardId }: BoardProps) {
                 onViewCard={(card) => setViewCard(card)}
               />
             ))}
-            <div className="flex-shrink-0 flex items-start pt-1 snap-center">
+            <div style={{ marginTop: 40, display: "flex", justifyContent: "center" }}>
               <button
                 onClick={addColumn}
-                className="flex flex-col items-center justify-center w-16 h-16 rounded-xl border-2 border-dashed border-white/30 text-white/70 hover:border-white/60 hover:text-white transition-colors"
+                style={{
+                  border: "2px dashed var(--border-color)",
+                  color: "var(--text-muted)",
+                  background: "transparent",
+                  cursor: "pointer",
+                  padding: "12px 32px",
+                  fontFamily: "var(--font-sans)",
+                  fontSize: "13px",
+                  fontWeight: 500,
+                  transition: "all var(--transition-fast)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = "var(--text-secondary)";
+                  e.currentTarget.style.color = "var(--text-primary)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "var(--border-color)";
+                  e.currentTarget.style.color = "var(--text-muted)";
+                }}
                 aria-label="Add column"
               >
-                <span className="text-2xl leading-none">+</span>
-                <span className="text-xs mt-1">Column</span>
+                + Add Column
               </button>
             </div>
           </div>
@@ -512,7 +543,11 @@ export default function Board({ boardId }: BoardProps) {
         </DragOverlay>
       </DndContext>
 
-      {/* Modals */}
+      <TitleBlockFooter
+        projectName={boardData?.title ?? "Board"}
+        taskCount={totalTasks}
+      />
+
       {addCardTarget && (
         <AddCardModal
           onClose={() => setAddCardTarget(null)}

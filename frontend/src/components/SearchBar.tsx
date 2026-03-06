@@ -35,8 +35,8 @@ export default function SearchBar({ value, onChange, onClear }: SearchBarProps) 
   return (
     <div className="relative flex items-center">
       <svg
-        className="absolute left-3 w-4 h-4 pointer-events-none"
-        style={{ color: "#888888" }}
+        className="absolute left-0 w-3.5 h-3.5 pointer-events-none"
+        style={{ color: "var(--text-muted)" }}
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -51,15 +51,16 @@ export default function SearchBar({ value, onChange, onClear }: SearchBarProps) 
         onChange={(e) => handleChange(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder="Search cards..."
-        className="pl-9 pr-8 py-1.5 text-sm border border-white/20 rounded-lg bg-white/10 text-white placeholder-white/40 focus:outline-none focus:ring-2 w-48 focus:w-64 transition-all"
-        style={{ "--tw-ring-color": "#209dd7" } as React.CSSProperties}
+        className="input-underline pl-5 pr-6 w-40 focus:w-56 transition-all"
         data-search-input
       />
       {localValue && (
         <button
           type="button"
           onClick={() => { setLocalValue(""); onChange(""); onClear(); }}
-          className="absolute right-2 text-white/50 hover:text-white transition-colors text-xs"
+          className="absolute right-0 text-xs"
+          style={{ color: "var(--text-muted)" }}
+          aria-label="Clear search"
         >
           x
         </button>

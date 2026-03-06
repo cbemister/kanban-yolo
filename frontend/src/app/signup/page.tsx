@@ -49,48 +49,48 @@ export default function SignupPage() {
   return (
     <div
       className="min-h-dvh flex items-center justify-center px-4"
-      style={{ background: "#032147" }}
+      style={{ position: "relative", zIndex: 1 }}
     >
-      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
-        <div className="flex items-center gap-3 mb-8">
-          <div className="w-1.5 h-10 rounded-full" style={{ background: "#ecad0a" }} />
-          <h1 className="text-2xl font-bold" style={{ color: "#032147" }}>
+      <div className="modal-panel modal-panel-sm p-8">
+        <div className="mb-8">
+          <h1
+            className="heading-serif mb-2"
+            style={{ fontSize: 28, letterSpacing: "-0.02em" }}
+          >
             Create your account
           </h1>
+          <hr className="title-rule" />
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium mb-1" style={{ color: "#032147" }}>
-              Name
-            </label>
+            <label className="text-section-title block mb-2">Name</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
-              style={{ "--tw-ring-color": "#209dd7" } as React.CSSProperties}
+              className="input w-full"
               required
               autoFocus
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1" style={{ color: "#032147" }}>
-              Email
-            </label>
+            <label className="text-section-title block mb-2">Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
-              style={{ "--tw-ring-color": "#209dd7" } as React.CSSProperties}
+              className="input w-full"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1" style={{ color: "#032147" }}>
+            <label className="text-section-title block mb-2">
               Password
-              <span className="font-normal ml-1" style={{ color: "#888888" }}>
+              <span
+                className="font-normal ml-1"
+                style={{ color: "var(--text-muted)", fontSize: 10 }}
+              >
                 (min. 8 characters)
               </span>
             </label>
@@ -98,8 +98,7 @@ export default function SignupPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
-              style={{ "--tw-ring-color": "#209dd7" } as React.CSSProperties}
+              className="input w-full"
               minLength={8}
               required
             />
@@ -107,16 +106,22 @@ export default function SignupPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
-            style={{ background: "#753991" }}
+            className="btn btn-primary w-full"
           >
             {loading ? "Creating account..." : "Create account"}
           </button>
         </form>
 
-        <div className="mt-4 text-center text-sm" style={{ color: "#888888" }}>
+        <div
+          className="mt-6 text-center text-sm"
+          style={{ color: "var(--text-muted)" }}
+        >
           Already have an account?{" "}
-          <Link href="/login" className="font-medium" style={{ color: "#209dd7" }}>
+          <Link
+            href="/login"
+            className="font-medium"
+            style={{ color: "var(--accent)" }}
+          >
             Sign in
           </Link>
         </div>

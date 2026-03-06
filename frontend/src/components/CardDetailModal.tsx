@@ -93,29 +93,37 @@ export default function CardDetailModal({ card, boardId, currentUserId, onClose,
   const selectedLabelIds = (card.labels ?? []).map((cl) => cl.labelId);
   const assigneeIds = (card.assignees ?? []).map((a) => a.userId);
   const dueDateValue = card.dueDate ? new Date(card.dueDate) : null;
+  const isOverdue = card.dueDate ? new Date(card.dueDate) < new Date() : false;
 
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center z-50"
-      style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}
+      className="modal-backdrop-overlay"
       onClick={editing ? undefined : onClose}
     >
       <div
-        className="bg-white rounded-xl shadow-xl p-4 sm:p-6 w-full max-w-md mx-4 relative max-h-[90dvh] overflow-y-auto"
+        className="modal-panel modal-panel-lg"
+        style={{
+          padding: "32px 36px",
+          borderLeft: isOverdue ? `4px solid var(--accent-danger)` : "2px solid var(--border-color)",
+        }}
         onClick={(e) => e.stopPropagation()}
       >
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 w-7 h-7 rounded-full flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-colors text-gray-500 hover:text-gray-800 text-sm font-bold"
-          aria-label="Close"
+        {/* Header */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            marginBottom: "28px",
+            gap: "16px",
+          }}
         >
-          x
-        </button>
-
-        {editing ? (
-          <>
-            <div className="mb-4 pr-8">
-              <label className="block text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: "#888888" }}>
+          {editing ? (
+            <div style={{ flex: 1 }}>
+              <label
+                className="text-section-title"
+                style={{ display: "block", marginBottom: "8px" }}
+              >
                 Title
               </label>
               <input
@@ -123,38 +131,71 @@ export default function CardDetailModal({ card, boardId, currentUserId, onClose,
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 font-semibold"
-                style={{ color: "#032147", "--tw-ring-color": "#209dd7" } as React.CSSProperties}
+                className="input"
+                style={{ fontSize: "20px", fontFamily: "var(--font-serif)", fontWeight: 400 }}
               />
             </div>
-            <div className="mb-5">
-              <label className="block text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: "#888888" }}>
+          ) : (
+            <div style={{ flex: 1 }}>
+              <h2
+                style={{
+                  fontFamily: "var(--font-serif)",
+                  fontSize: "32px",
+                  fontWeight: 400,
+                  lineHeight: 1.2,
+                  color: "var(--text-primary)",
+                  marginBottom: "8px",
+                }}
+              >
+                {card.title}
+              </h2>
+              <div className="title-rule" />
+            </div>
+          )}
+          <button
+            onClick={onClose}
+            className="btn btn-ghost"
+            style={{
+              fontSize: "11px",
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              color: "var(--accent)",
+              flexShrink: 0,
+            }}
+            aria-label="Close"
+          >
+            [X] CLOSE
+          </button>
+        </div>
+
+        {editing ? (
+          <>
+            {/* Details edit */}
+            <div style={{ marginBottom: "24px" }}>
+              <label
+                className="text-section-title"
+                style={{ display: "block", marginBottom: "8px" }}
+              >
                 Details
               </label>
               <textarea
                 value={details}
                 onChange={(e) => setDetails(e.target.value)}
                 rows={5}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 resize-none"
-                style={{ color: "#032147", "--tw-ring-color": "#209dd7" } as React.CSSProperties}
+                className="input"
+                style={{ resize: "none" }}
                 placeholder="Add details..."
               />
             </div>
-            <div className="flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 hover:bg-gray-200 transition-colors"
-                style={{ color: "#888888" }}
-              >
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+              <button type="button" className="btn btn-secondary" onClick={handleCancel}>
                 Cancel
               </button>
               <button
                 type="button"
+                className="btn btn-primary"
                 onClick={handleSave}
                 disabled={saving || !title.trim()}
-                className="px-4 py-2 rounded-lg text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-60"
-                style={{ background: "#753991" }}
               >
                 {saving ? "Saving..." : "Save"}
               </button>
@@ -162,80 +203,144 @@ export default function CardDetailModal({ card, boardId, currentUserId, onClose,
           </>
         ) : (
           <>
-            <h2
-              className="text-xl font-bold mb-3 pr-8 leading-snug"
-              style={{ color: "#032147" }}
+            {/* Description */}
+            <div style={{ marginBottom: "28px" }}>
+              <p
+                className="text-section-title"
+                style={{
+                  borderBottom: "1px solid var(--border-light)",
+                  paddingBottom: "8px",
+                  marginBottom: "14px",
+                }}
+              >
+                Description
+              </p>
+              {card.details ? (
+                <p
+                  style={{
+                    fontSize: "14px",
+                    lineHeight: 1.7,
+                    color: "var(--text-secondary)",
+                  }}
+                >
+                  {card.details}
+                </p>
+              ) : (
+                <p
+                  style={{
+                    fontSize: "14px",
+                    fontStyle: "italic",
+                    color: "var(--text-muted)",
+                  }}
+                >
+                  No details provided.
+                </p>
+              )}
+            </div>
+
+            {/* Meta grid: due date + labels + assignees */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "24px",
+                marginBottom: "28px",
+              }}
             >
-              {card.title}
-            </h2>
-            {card.details ? (
-              <p className="text-sm leading-relaxed mb-4" style={{ color: "#888888" }}>
-                {card.details}
-              </p>
-            ) : (
-              <p className="text-sm italic mb-4" style={{ color: "#888888" }}>
-                No details provided.
-              </p>
-            )}
+              {/* Due Date */}
+              <div>
+                <p
+                  className="text-section-title"
+                  style={{
+                    borderBottom: "1px solid var(--border-light)",
+                    paddingBottom: "8px",
+                    marginBottom: "14px",
+                  }}
+                >
+                  Due Date
+                </p>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                  {card.dueDate && <DueDateBadge dueDate={card.dueDate} />}
+                  <DueDatePicker value={dueDateValue} onChange={handleDueDateChange} />
+                </div>
+              </div>
 
-            {/* Due Date */}
-            <div className="mb-4">
-              <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: "#888888" }}>
-                Due Date
-              </p>
-              <div className="flex items-center gap-2">
-                {card.dueDate && <DueDateBadge dueDate={card.dueDate} />}
-                <DueDatePicker value={dueDateValue} onChange={handleDueDateChange} />
+              {/* Labels */}
+              <div>
+                <p
+                  className="text-section-title"
+                  style={{
+                    borderBottom: "1px solid var(--border-light)",
+                    paddingBottom: "8px",
+                    marginBottom: "14px",
+                  }}
+                >
+                  Labels
+                </p>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                  {(card.labels ?? []).map((cl) => (
+                    <LabelChip key={cl.labelId} label={cl.label} size="sm" />
+                  ))}
+                  <LabelPicker
+                    boardId={boardId}
+                    cardId={card.id}
+                    selectedLabelIds={selectedLabelIds}
+                    onToggle={handleLabelToggle}
+                  />
+                </div>
+              </div>
+
+              {/* Assignees */}
+              <div>
+                <p
+                  className="text-section-title"
+                  style={{
+                    borderBottom: "1px solid var(--border-light)",
+                    paddingBottom: "8px",
+                    marginBottom: "14px",
+                  }}
+                >
+                  Assignees
+                </p>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                  {(card.assignees ?? []).map((a) => (
+                    <UserAvatar key={a.userId} user={a.user} size="md" />
+                  ))}
+                  <AssigneePicker
+                    boardId={boardId}
+                    cardId={card.id}
+                    assigneeIds={assigneeIds}
+                    onToggle={handleAssigneeToggle}
+                  />
+                </div>
               </div>
             </div>
 
-            {/* Labels */}
-            <div className="mb-4">
-              <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: "#888888" }}>
-                Labels
-              </p>
-              <div className="flex items-center gap-2 flex-wrap">
-                {(card.labels ?? []).map((cl) => (
-                  <LabelChip key={cl.labelId} label={cl.label} size="sm" />
-                ))}
-                <LabelPicker
-                  boardId={boardId}
-                  cardId={card.id}
-                  selectedLabelIds={selectedLabelIds}
-                  onToggle={handleLabelToggle}
-                />
-              </div>
-            </div>
-
-            {/* Assignees */}
-            <div className="mb-5">
-              <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: "#888888" }}>
-                Assignees
-              </p>
-              <div className="flex items-center gap-2 flex-wrap">
-                {(card.assignees ?? []).map((a) => (
-                  <UserAvatar key={a.userId} user={a.user} size="md" />
-                ))}
-                <AssigneePicker
-                  boardId={boardId}
-                  cardId={card.id}
-                  assigneeIds={assigneeIds}
-                  onToggle={handleAssigneeToggle}
-                />
-              </div>
-            </div>
-
+            {/* Edit button */}
             <button
               onClick={() => setEditing(true)}
-              className="text-sm font-medium transition-colors"
-              style={{ color: "#209dd7" }}
+              className="btn btn-secondary btn-sm"
+              style={{ marginBottom: "28px" }}
             >
               Edit
             </button>
 
             {/* Comments */}
-            <div className="mt-6 border-t border-gray-100 pt-5">
-              <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: "#888888" }}>
+            <div
+              style={{
+                borderTop: "1px solid var(--border-light)",
+                paddingTop: "24px",
+                marginBottom: "24px",
+              }}
+            >
+              <p
+                className="text-section-title"
+                style={{
+                  borderBottom: "1px solid var(--border-light)",
+                  paddingBottom: "8px",
+                  marginBottom: "14px",
+                }}
+              >
                 Comments
               </p>
               <CommentList cardId={card.id} currentUserId={currentUserId} />
@@ -243,12 +348,24 @@ export default function CardDetailModal({ card, boardId, currentUserId, onClose,
             </div>
 
             {/* Attachments */}
-            <div className="mt-5 border-t border-gray-100 pt-5">
-              <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: "#888888" }}>
+            <div
+              style={{
+                borderTop: "1px solid var(--border-light)",
+                paddingTop: "24px",
+              }}
+            >
+              <p
+                className="text-section-title"
+                style={{
+                  borderBottom: "1px solid var(--border-light)",
+                  paddingBottom: "8px",
+                  marginBottom: "14px",
+                }}
+              >
                 Attachments
               </p>
               <AttachmentList cardId={card.id} currentUserId={currentUserId} key={attachRefresh} />
-              <div className="mt-2">
+              <div style={{ marginTop: "10px" }}>
                 <FileUpload cardId={card.id} onUploaded={() => setAttachRefresh((n) => n + 1)} />
               </div>
             </div>

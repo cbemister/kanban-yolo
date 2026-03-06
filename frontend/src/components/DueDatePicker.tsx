@@ -34,21 +34,23 @@ export default function DueDatePicker({ value, onChange }: DueDatePickerProps) {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
-        style={{ color: "#209dd7" }}
+        className="btn btn-secondary btn-sm"
       >
         {value ? format(value, "MMM d, yyyy") : "Set due date"}
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 p-2">
+        <div
+          className="dropdown-panel absolute left-0 top-full mt-1 p-2"
+          style={{ zIndex: "var(--z-dropdown)" }}
+        >
           <DayPicker
             mode="single"
             selected={value ?? undefined}
             onSelect={handleSelect}
             modifiersStyles={{
-              selected: { background: "#753991", color: "white", borderRadius: "6px" },
-              today: { fontWeight: "bold", color: "#209dd7" },
+              selected: { background: "var(--accent)", color: "white" },
+              today: { fontWeight: "bold", color: "var(--accent)" },
             }}
           />
           {value && (
@@ -56,8 +58,7 @@ export default function DueDatePicker({ value, onChange }: DueDatePickerProps) {
               <button
                 type="button"
                 onClick={() => { onChange(null); setOpen(false); }}
-                className="text-xs font-medium px-3 py-1.5 rounded-lg w-full border border-gray-200 hover:bg-gray-50 transition-colors"
-                style={{ color: "#888888" }}
+                className="btn btn-ghost btn-sm w-full"
               >
                 Clear due date
               </button>

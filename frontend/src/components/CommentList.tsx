@@ -96,26 +96,30 @@ export default function CommentList({ cardId, currentUserId }: CommentListProps)
   }
 
   if (isLoading && allComments.length === 0) {
-    return <p className="text-sm" style={{ color: "#888888" }}>Loading comments...</p>;
+    return <p className="text-sm" style={{ color: "var(--text-muted)" }}>Loading comments...</p>;
   }
 
   if (allComments.length === 0) {
-    return <p className="text-sm italic" style={{ color: "#888888" }}>No comments yet.</p>;
+    return <p className="text-sm italic" style={{ color: "var(--text-muted)" }}>No comments yet.</p>;
   }
 
   return (
     <div className="space-y-4">
       {allComments.map((comment) => (
-        <div key={comment.id} className="flex gap-3">
+        <div
+          key={comment.id}
+          className="flex gap-3 pb-4"
+          style={{ borderBottom: "1px solid var(--border-light)" }}
+        >
           <div className="flex-shrink-0">
             <UserAvatar user={comment.user} size="sm" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-baseline gap-2 mb-1">
-              <span className="text-sm font-semibold" style={{ color: "#032147" }}>
+              <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
                 {comment.user.name ?? comment.user.email}
               </span>
-              <span className="text-xs" style={{ color: "#888888" }}>
+              <span className="text-xs" style={{ color: "var(--text-muted)" }}>
                 {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
               </span>
             </div>
@@ -125,22 +129,19 @@ export default function CommentList({ cardId, currentUserId }: CommentListProps)
                   value={editContent}
                   onChange={(e) => setEditContent(e.target.value)}
                   rows={3}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 resize-none"
-                  style={{ color: "#032147", "--tw-ring-color": "#209dd7" } as React.CSSProperties}
+                  className="input resize-none"
                 />
                 <div className="flex gap-2 mt-2">
                   <button
                     onClick={() => handleSave(comment.id)}
                     disabled={saving || !editContent.trim()}
-                    className="px-3 py-1 rounded-lg text-xs font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-60"
-                    style={{ background: "#753991" }}
+                    className="btn btn-primary btn-sm"
                   >
                     {saving ? "Saving..." : "Save"}
                   </button>
                   <button
                     onClick={cancelEdit}
-                    className="px-3 py-1 rounded-lg text-xs font-medium bg-gray-100 hover:bg-gray-200 transition-colors"
-                    style={{ color: "#888888" }}
+                    className="btn btn-ghost btn-sm"
                   >
                     Cancel
                   </button>
@@ -148,22 +149,22 @@ export default function CommentList({ cardId, currentUserId }: CommentListProps)
               </div>
             ) : (
               <div>
-                <p className="text-sm whitespace-pre-wrap break-words" style={{ color: "#032147" }}>
+                <p className="text-sm whitespace-pre-wrap break-words" style={{ color: "var(--text-primary)" }}>
                   {comment.content}
                 </p>
                 {comment.userId === currentUserId && (
                   <div className="flex gap-3 mt-1">
                     <button
                       onClick={() => startEdit(comment)}
-                      className="text-xs transition-colors hover:underline"
-                      style={{ color: "#209dd7" }}
+                      className="btn-ghost text-xs"
+                      style={{ color: "var(--accent)", padding: 0 }}
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => handleDelete(comment.id)}
-                      className="text-xs transition-colors hover:underline"
-                      style={{ color: "#888888" }}
+                      className="btn-ghost text-xs"
+                      style={{ color: "var(--text-muted)", padding: 0 }}
                     >
                       Delete
                     </button>
@@ -177,8 +178,8 @@ export default function CommentList({ cardId, currentUserId }: CommentListProps)
       {data?.nextCursor && (
         <button
           onClick={() => setCursor(data.nextCursor)}
-          className="text-sm transition-colors"
-          style={{ color: "#209dd7" }}
+          className="btn-ghost text-sm"
+          style={{ color: "var(--accent)", padding: 0 }}
         >
           Load more
         </button>

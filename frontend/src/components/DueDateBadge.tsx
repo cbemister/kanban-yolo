@@ -12,29 +12,34 @@ export default function DueDateBadge({ dueDate }: DueDateBadgeProps) {
   today.setHours(0, 0, 0, 0);
 
   let label: string;
-  let color: string;
+  let isUrgent = false;
 
   if (isToday(date)) {
     label = "Today";
-    color = "#ecad0a";
+    isUrgent = true;
   } else if (isTomorrow(date)) {
     label = "Tomorrow";
-    color = "#ecad0a";
+    isUrgent = true;
   } else if (isPast(date)) {
-    label = format(date, "MMM d");
-    color = "#ef4444";
+    label = `${format(date, "MMM d")} -- Overdue`;
+    isUrgent = true;
   } else if (differenceInDays(date, today) <= 2) {
     label = format(date, "MMM d");
-    color = "#ecad0a";
+    isUrgent = true;
   } else {
     label = format(date, "MMM d");
-    color = "#888888";
   }
 
   return (
     <span
-      className="inline-flex items-center text-xs font-medium px-1.5 py-0.5 rounded"
-      style={{ color, background: `${color}18` }}
+      style={{
+        fontFamily: "var(--font-sans)",
+        fontSize: 11,
+        fontWeight: isUrgent ? 600 : 500,
+        letterSpacing: "0.08em",
+        textTransform: "uppercase",
+        color: isUrgent ? "var(--accent)" : "var(--text-muted)",
+      }}
     >
       {label}
     </span>

@@ -1,0 +1,1614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editorial Grid -- Project Alpha -- Blueprint</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* --------------------------------------------------------
+       DESIGN SYSTEM -- Editorial Grid: Architectural Blueprint
+       Swiss-typographic Kanban on a deep blueprint-blue field.
+       Color-inverted: white/light content on engineering blue.
+       Orange accent = red grease-pencil marking.
+    -------------------------------------------------------- */
+
+    :root {
+      --font-serif: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+      /* Blueprint color paradigm */
+      --bg-base: #1a3a5c;
+      --bg-card: rgba(255,255,255,0.06);
+      --bg-card-featured: rgba(255,255,255,0.10);
+      --border: rgba(255,255,255,0.30);
+      --border-light: rgba(255,255,255,0.10);
+      --text-primary: #e8edf2;
+      --text-secondary: #8fa5be;
+      --text-muted: #5a7a9a;
+      --accent: #ff6b35;
+      --accent-hover: #e55a28;
+
+      --label-dusty-blue: #7eb8e0;
+      --label-sage: #8ec288;
+      --label-warm-gray: #c4b8a8;
+      --label-slate: #95a8be;
+    }
+
+    /* Dark mode = deeper blueprint */
+    .dark {
+      --bg-base: #0d1f33;
+      --bg-card: rgba(255,255,255,0.08);
+      --bg-card-featured: rgba(255,255,255,0.12);
+      --border: rgba(255,255,255,0.35);
+      --border-light: rgba(255,255,255,0.12);
+      --text-primary: #eef2f7;
+      --text-secondary: #9ab4ce;
+      --text-muted: #6688aa;
+      --accent: #ff7b4a;
+      --accent-hover: #ff6030;
+
+      --label-dusty-blue: #8cc4eb;
+      --label-sage: #9bd095;
+      --label-warm-gray: #d0c4b4;
+      --label-slate: #a3b5c8;
+    }
+
+    /* Light mode = tracing paper / engineering paper */
+    .light {
+      --bg-base: #f5f0e6;
+      --bg-card: rgba(255,255,255,0.65);
+      --bg-card-featured: rgba(255,255,255,0.85);
+      --border: rgba(26,58,92,0.25);
+      --border-light: rgba(26,58,92,0.10);
+      --text-primary: #1a1a1a;
+      --text-secondary: #4a5568;
+      --text-muted: #8a94a0;
+      --accent: #e05a20;
+      --accent-hover: #c44a18;
+
+      --label-dusty-blue: #4a80a8;
+      --label-sage: #5a8a54;
+      --label-warm-gray: #8a7e6e;
+      --label-slate: #5a6a7a;
+    }
+
+    /* --------------------------------------------------------
+       RESET & BASE
+    -------------------------------------------------------- */
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg-base);
+      color: var(--text-primary);
+      line-height: 1.5;
+      transition: background 150ms linear, color 150ms linear;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+
+    /* Focus-visible: accent ring */
+    *:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* --------------------------------------------------------
+       BLUEPRINT GRID LINES (the defining visual)
+    -------------------------------------------------------- */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      /* Major grid lines every 100px + minor grid lines every 20px */
+      background:
+        linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px),
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 100px 100px, 100px 100px, 20px 20px, 20px 20px;
+      transition: background 150ms linear;
+    }
+
+    /* Tracing paper mode: blue grid lines on warm background */
+    .light body::before,
+    .light::before {
+      /* We need to handle this via a pseudo on html for .light */
+    }
+
+    html.light::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(rgba(26,58,92,0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(26,58,92,0.08) 1px, transparent 1px),
+        linear-gradient(rgba(26,58,92,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(26,58,92,0.03) 1px, transparent 1px);
+      background-size: 100px 100px, 100px 100px, 20px 20px, 20px 20px;
+    }
+
+    /* Hide the default body grid in light mode */
+    html.light body::before {
+      opacity: 0;
+    }
+
+    /* Deeper blueprint: slightly brighter grid */
+    html.dark body::before {
+      background:
+        linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px),
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 100px 100px, 100px 100px, 20px 20px, 20px 20px;
+    }
+
+    /* --------------------------------------------------------
+       SCALE INDICATOR (bottom-right decorative element)
+    -------------------------------------------------------- */
+    .scale-indicator {
+      position: fixed;
+      bottom: 16px;
+      right: 24px;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      pointer-events: none;
+      opacity: 0.4;
+    }
+
+    .scale-bar {
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+
+    .scale-bar-segment {
+      width: 20px;
+      height: 1px;
+      background: var(--text-muted);
+    }
+
+    .scale-bar-tick {
+      width: 1px;
+      height: 8px;
+      background: var(--text-muted);
+    }
+
+    .scale-text {
+      font-family: var(--font-sans);
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* --------------------------------------------------------
+       TOOLBAR
+    -------------------------------------------------------- */
+    .toolbar {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 40px 64px 24px;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      z-index: 1;
+    }
+
+    .toolbar-left {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      position: relative;
+    }
+
+    /* Dimension lines framing the title area */
+    .toolbar-left::before {
+      content: '';
+      position: absolute;
+      top: -12px;
+      left: 0;
+      width: 140px;
+      height: 0;
+      border-top: 1px solid var(--text-muted);
+      opacity: 0.35;
+    }
+
+    .toolbar-left::after {
+      content: '';
+      position: absolute;
+      top: -16px;
+      left: 0;
+      width: 1px;
+      height: 8px;
+      background: var(--text-muted);
+      opacity: 0.35;
+      box-shadow: 139px 0 0 0 var(--text-muted);
+    }
+
+    .board-title {
+      font-family: var(--font-serif);
+      font-size: 48px;
+      font-weight: 400;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      color: var(--text-primary);
+    }
+
+    .title-rule {
+      width: 80px;
+      height: 3px;
+      background: var(--accent);
+      margin-top: 10px;
+      border: none;
+    }
+
+    .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+    }
+
+    .search-field {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid var(--text-muted);
+      padding-bottom: 4px;
+      transition: border-color 150ms linear;
+    }
+
+    .search-field:focus-within {
+      border-color: var(--accent);
+    }
+
+    .search-icon {
+      width: 14px;
+      height: 14px;
+      color: var(--text-muted);
+    }
+
+    .search-input {
+      border: none;
+      background: transparent;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      color: var(--text-primary);
+      width: 140px;
+      outline: none;
+    }
+
+    .search-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .toolbar-avatars {
+      display: flex;
+      gap: -4px;
+    }
+
+    .avatar-sm {
+      width: 28px;
+      height: 28px;
+      border-radius: 0;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-left: -6px;
+    }
+
+    .avatar-sm:first-child { margin-left: 0; }
+
+    .bell-btn {
+      position: relative;
+      padding: 4px;
+    }
+
+    .bell-icon {
+      width: 18px;
+      height: 18px;
+      color: var(--text-secondary);
+      transition: color 150ms linear;
+    }
+
+    .bell-btn:hover .bell-icon { color: var(--text-primary); }
+
+    .bell-dot {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+    }
+
+    .share-link {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--accent);
+      text-decoration: none;
+      position: relative;
+    }
+
+    .share-link::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 0;
+      height: 1px;
+      background: var(--accent);
+      transition: width 150ms linear;
+    }
+
+    .share-link:hover::after { width: 100%; }
+
+    .theme-toggle {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      transition: color 150ms linear;
+      padding: 4px 0;
+    }
+
+    .theme-toggle:hover { color: var(--text-primary); }
+
+    /* --------------------------------------------------------
+       MAIN CONTENT AREA
+    -------------------------------------------------------- */
+    .board-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 48px 64px 80px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Drawing border -- double-line technical drawing frame */
+    .board-content::before {
+      content: '';
+      position: absolute;
+      inset: 24px;
+      border: 1px solid rgba(255,255,255,0.06);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .board-content::after {
+      content: '';
+      position: absolute;
+      top: 28px;
+      left: 28px;
+      right: 28px;
+      bottom: 28px;
+      border: 1px solid rgba(255,255,255,0.03);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .light .board-content::before {
+      border-color: rgba(26,58,92,0.08);
+    }
+
+    .light .board-content::after {
+      border-color: rgba(26,58,92,0.04);
+    }
+
+    /* --------------------------------------------------------
+       CATEGORY SECTIONS
+    -------------------------------------------------------- */
+    .category {
+      margin-bottom: 56px;
+    }
+
+    .category:last-child { margin-bottom: 0; }
+
+    .category-header {
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+      margin-bottom: 4px;
+      position: relative;
+    }
+
+    /* Section callout: small filled triangle before category headers */
+    .category-header::before {
+      content: '';
+      display: inline-block;
+      width: 0;
+      height: 0;
+      border-left: 6px solid var(--accent);
+      border-top: 4px solid transparent;
+      border-bottom: 4px solid transparent;
+      flex-shrink: 0;
+      position: relative;
+      top: -2px;
+    }
+
+    .category-title {
+      font-family: var(--font-serif);
+      font-size: 32px;
+      font-weight: 400;
+      line-height: 1.2;
+      color: var(--text-primary);
+    }
+
+    .category-count {
+      font-family: var(--font-serif);
+      font-size: 24px;
+      color: var(--text-muted);
+      line-height: 1;
+    }
+
+    /* Chain-line (dash-dot-dash) pattern for category rules */
+    .category-rule {
+      width: 100%;
+      height: 0;
+      border: none;
+      border-top: 1px dashed var(--border);
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    /* Dash-dot pattern overlay */
+    .category-rule::after {
+      content: '';
+      position: absolute;
+      top: -1px;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      background: repeating-linear-gradient(
+        90deg,
+        var(--border) 0px,
+        var(--border) 12px,
+        transparent 12px,
+        transparent 16px,
+        var(--border) 16px,
+        var(--border) 18px,
+        transparent 18px,
+        transparent 22px
+      );
+    }
+
+    /* --------------------------------------------------------
+       CARD GRID -- masonry-like mixed sizing
+    -------------------------------------------------------- */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    /* --------------------------------------------------------
+       CARDS -- Blueprint annotation callouts
+    -------------------------------------------------------- */
+    .card {
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      position: relative;
+      cursor: pointer;
+      transition: background 150ms linear, box-shadow 150ms linear;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 0;
+      height: 100%;
+      background: var(--accent);
+      transition: width 150ms linear;
+      z-index: 1;
+    }
+
+    .card:hover::before { width: 3px; }
+    .card:hover {
+      background: var(--bg-card-featured);
+      box-shadow: 0 0 20px rgba(255,255,255,0.05);
+    }
+
+    .light .card:hover {
+      box-shadow: 0 2px 12px rgba(26,58,92,0.08);
+    }
+
+    /* Card sizes */
+    .card-sm { grid-column: span 1; }
+
+    .card-md {
+      grid-column: span 2;
+    }
+
+    .card-lg {
+      grid-column: span 2;
+      grid-row: span 2;
+      background: var(--bg-card-featured);
+    }
+
+    /* Urgent stripe -- always visible */
+    .card-urgent::before {
+      width: 4px;
+      background: var(--accent);
+    }
+
+    .card-urgent:hover::before { width: 4px; }
+
+    /* Card internals */
+    .card-inner {
+      padding: 16px 20px;
+      position: relative;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-lg .card-inner { padding: 24px 28px; }
+
+    /* Card numbers as callout reference numbers -- boxed treatment */
+    .card-number {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      font-family: var(--font-sans);
+      font-size: 10px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+      border: 1px solid var(--border);
+      padding: 1px 5px;
+      line-height: 1.4;
+    }
+
+    .card-lg .card-number {
+      top: 18px;
+      right: 20px;
+      font-size: 11px;
+      padding: 2px 6px;
+    }
+
+    .card-title {
+      font-family: var(--font-serif);
+      font-size: 15px;
+      font-weight: 400;
+      line-height: 1.35;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+      padding-right: 42px;
+    }
+
+    .card-lg .card-title,
+    .card-md .card-title {
+      font-size: 18px;
+      line-height: 1.3;
+      margin-bottom: 10px;
+    }
+
+    .card-description {
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 400;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+      flex: 1;
+    }
+
+    .card-sm .card-description { display: none; }
+
+    /* Pull quote decoration on large cards */
+    .card-lg .card-description {
+      position: relative;
+      padding-left: 2px;
+    }
+
+    .pull-quote-mark {
+      position: absolute;
+      top: -20px;
+      left: -8px;
+      font-family: var(--font-serif);
+      font-size: 72px;
+      line-height: 1;
+      color: var(--accent);
+      opacity: 0.15;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    /* Labels -- blueprint annotation markers */
+    .card-labels {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .card-sm .card-labels {
+      margin-bottom: 8px;
+    }
+
+    .label {
+      font-family: var(--font-sans);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border: 1px solid;
+    }
+
+    .label-dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      margin-right: 2px;
+    }
+
+    /* Small cards show dots instead of text labels */
+    .card-sm .label {
+      font-size: 0;
+      padding: 0;
+      border: none;
+      width: 8px;
+      height: 8px;
+    }
+
+    .label-urgent { color: var(--accent); border-color: var(--accent); }
+    .label-design { color: var(--label-dusty-blue); border-color: var(--label-dusty-blue); }
+    .label-frontend { color: var(--label-sage); border-color: var(--label-sage); }
+    .label-backend { color: var(--label-warm-gray); border-color: var(--label-warm-gray); }
+    .label-research { color: var(--label-slate); border-color: var(--label-slate); }
+
+    .card-sm .label-urgent { background: var(--accent); }
+    .card-sm .label-design { background: var(--label-dusty-blue); }
+    .card-sm .label-frontend { background: var(--label-sage); }
+    .card-sm .label-backend { background: var(--label-warm-gray); }
+    .card-sm .label-research { background: var(--label-slate); }
+
+    /* Card footer */
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: auto;
+      padding-top: 10px;
+      border-top: 1px solid var(--border-light);
+    }
+
+    .card-sm .card-footer {
+      border-top: none;
+      padding-top: 6px;
+    }
+
+    .card-avatar {
+      width: 22px;
+      height: 22px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .card-lg .card-avatar {
+      width: 26px;
+      height: 26px;
+      font-size: 10px;
+    }
+
+    .card-assignee {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-assignee-name {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .card-sm .card-assignee-name { display: none; }
+
+    .card-due {
+      font-family: var(--font-sans);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .card-due.overdue {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .card-due.due-soon {
+      color: var(--accent);
+    }
+
+    /* --------------------------------------------------------
+       CARD DETAIL MODAL -- "Detail Drawing" callout
+    -------------------------------------------------------- */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.65);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 150ms linear, visibility 150ms linear;
+    }
+
+    .modal-backdrop.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal {
+      background: var(--bg-base);
+      border: 2px solid var(--border);
+      width: 100%;
+      max-width: 640px;
+      max-height: 85vh;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    /* Technical reference marker */
+    .modal::before {
+      content: 'DETAIL A';
+      position: absolute;
+      top: 10px;
+      left: 12px;
+      font-family: var(--font-sans);
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      opacity: 0.5;
+      z-index: 2;
+    }
+
+    .modal-urgent-stripe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--accent);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 32px 36px 20px;
+    }
+
+    .modal-title {
+      font-family: var(--font-serif);
+      font-size: 32px;
+      font-weight: 400;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+      padding-right: 24px;
+    }
+
+    .modal-close {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 0;
+      flex-shrink: 0;
+      transition: opacity 150ms linear;
+    }
+
+    .modal-close:hover { opacity: 0.7; }
+
+    .modal-body {
+      padding: 0 36px 36px;
+    }
+
+    .modal-section {
+      margin-bottom: 28px;
+    }
+
+    .modal-section:last-child { margin-bottom: 0; }
+
+    /* Dash-dot-dash section dividers in modal */
+    .modal-section-title {
+      font-family: var(--font-sans);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding-bottom: 8px;
+      border-bottom: none;
+      margin-bottom: 14px;
+      position: relative;
+    }
+
+    .modal-section-title::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      background: repeating-linear-gradient(
+        90deg,
+        var(--border-light) 0px,
+        var(--border-light) 10px,
+        transparent 10px,
+        transparent 14px,
+        var(--border-light) 14px,
+        var(--border-light) 16px,
+        transparent 16px,
+        transparent 20px
+      );
+    }
+
+    .modal-description {
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+    }
+
+    .modal-meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    .modal-meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .modal-meta-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .modal-meta-value {
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    .modal-labels {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .modal-assignees {
+      display: flex;
+      gap: 10px;
+    }
+
+    .modal-assignee {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .modal-assignee-name {
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    /* Comments */
+    .comment {
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .comment:last-child { border-bottom: none; }
+
+    .comment-author {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .comment-time {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-left: 10px;
+      font-weight: 400;
+    }
+
+    .comment-text {
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+
+    /* --------------------------------------------------------
+       FOOTER -- Architectural title block
+    -------------------------------------------------------- */
+    .page-footer {
+      border-top: 1px solid var(--border);
+      padding: 0 64px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .title-block {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      margin-left: auto;
+      max-width: 480px;
+      border-left: 1px solid var(--border);
+    }
+
+    .title-block-main {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .title-block-cell {
+      padding: 8px 16px;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .title-block-cell:nth-child(odd) {
+      border-right: 1px solid var(--border-light);
+    }
+
+    .title-block-label {
+      font-family: var(--font-sans);
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .title-block-value {
+      font-family: var(--font-sans);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      display: block;
+    }
+
+    .title-block-project {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 24px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .title-block-project-name {
+      font-family: var(--font-serif);
+      font-size: 16px;
+      color: var(--text-primary);
+      letter-spacing: 0.02em;
+    }
+
+    /* --------------------------------------------------------
+       RESPONSIVE
+    -------------------------------------------------------- */
+    @media (max-width: 1024px) {
+      .toolbar { padding: 32px 40px 20px; }
+      .board-content { padding: 36px 40px 64px; }
+      .page-footer { padding: 0 40px; }
+    }
+
+    @media (max-width: 768px) {
+      .card-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .card-md { grid-column: span 2; }
+      .card-lg { grid-column: span 2; }
+
+      .toolbar {
+        padding: 24px 24px 16px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+      }
+
+      .toolbar-right { flex-wrap: wrap; gap: 16px; }
+
+      .board-title { font-size: 36px; }
+      .category-title { font-size: 26px; }
+      .category-count { font-size: 20px; }
+
+      .board-content { padding: 28px 24px 48px; }
+      .page-footer { padding: 0 24px; }
+
+      .modal-header { padding: 24px; }
+      .modal-body { padding: 0 24px 24px; }
+      .modal-title { font-size: 26px; }
+      .modal-meta-grid { grid-template-columns: 1fr; gap: 16px; }
+
+      .title-block { max-width: 100%; }
+      .scale-indicator { display: none; }
+    }
+
+    @media (max-width: 640px) {
+      .card-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .card-sm,
+      .card-md,
+      .card-lg {
+        grid-column: span 1;
+        grid-row: span 1;
+      }
+
+      .card-sm .card-description { display: block; }
+      .card-sm .card-assignee-name { display: inline; }
+      .card-sm .label {
+        font-size: 10px;
+        padding: 2px 6px;
+        border: 1px solid;
+        width: auto;
+        height: auto;
+        background: transparent;
+      }
+
+      .board-title { font-size: 32px; }
+      .category-title { font-size: 24px; }
+
+      .toolbar-left::before,
+      .toolbar-left::after { display: none; }
+
+      .toolbar-right { width: 100%; }
+
+      .modal {
+        max-width: 100%;
+        max-height: 100vh;
+        height: 100vh;
+        border: none;
+      }
+
+      .title-block-main { grid-template-columns: 1fr; }
+    }
+
+    /* --------------------------------------------------------
+       REDUCED MOTION
+    -------------------------------------------------------- */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- ======================================================
+       TOOLBAR
+  ====================================================== -->
+  <header class="toolbar">
+    <div class="toolbar-left">
+      <h1 class="board-title">Project Alpha</h1>
+      <hr class="title-rule">
+    </div>
+    <div class="toolbar-right">
+      <div class="search-field">
+        <svg class="search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="6.5" cy="6.5" r="5.5"/>
+          <line x1="10.5" y1="10.5" x2="15" y2="15"/>
+        </svg>
+        <input type="text" class="search-input" placeholder="Search tasks" aria-label="Search tasks">
+      </div>
+      <div class="toolbar-avatars">
+        <div class="avatar-sm">JD</div>
+        <div class="avatar-sm">KL</div>
+        <div class="avatar-sm">MR</div>
+      </div>
+      <button class="bell-btn" aria-label="Notifications">
+        <svg class="bell-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M10 2a5 5 0 00-5 5v3l-1.5 2.5h13L15 10V7a5 5 0 00-5-5z"/>
+          <path d="M8 16.5a2 2 0 004 0"/>
+        </svg>
+        <span class="bell-dot"></span>
+      </button>
+      <a href="#" class="share-link">Share</a>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">Blueprint</button>
+    </div>
+  </header>
+
+  <!-- ======================================================
+       BOARD CONTENT
+  ====================================================== -->
+  <main class="board-content">
+
+    <!-- ---- BACKLOG ---- -->
+    <section class="category">
+      <div class="category-header">
+        <h2 class="category-title">Backlog</h2>
+        <span class="category-count">4</span>
+      </div>
+      <hr class="category-rule">
+      <div class="card-grid">
+
+        <!-- SM -->
+        <article class="card card-sm" data-card="api-docs">
+          <div class="card-inner">
+            <span class="card-number">#01</span>
+            <div class="card-labels">
+              <span class="label label-backend">Backend</span>
+            </div>
+            <h3 class="card-title">API documentation update</h3>
+            <div class="card-footer">
+              <div class="card-assignee">
+                <div class="card-avatar">JD</div>
+              </div>
+              <span class="card-due">Mar 14</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- SM -->
+        <article class="card card-sm" data-card="analytics">
+          <div class="card-inner">
+            <span class="card-number">#02</span>
+            <div class="card-labels">
+              <span class="label label-research">Research</span>
+            </div>
+            <h3 class="card-title">Analytics dashboard research</h3>
+            <div class="card-footer">
+              <div class="card-assignee">
+                <div class="card-avatar">KL</div>
+              </div>
+              <span class="card-due">Mar 20</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- MD: Redesign onboarding flow -->
+        <article class="card card-md" data-card="onboarding">
+          <div class="card-inner">
+            <span class="card-number">#03</span>
+            <div class="card-labels">
+              <span class="label label-design">Design</span>
+              <span class="label label-frontend">Frontend</span>
+            </div>
+            <h3 class="card-title">Redesign onboarding flow</h3>
+            <p class="card-description">Map current user drop-off points and design a streamlined three-step onboarding experience with progressive disclosure and contextual tooltips.</p>
+            <div class="card-footer">
+              <div class="card-assignee">
+                <div class="card-avatar">MR</div>
+                <span class="card-assignee-name">M. Reyes</span>
+              </div>
+              <span class="card-due due-soon">Mar 4</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- SM -->
+        <article class="card card-sm" data-card="dark-mode">
+          <div class="card-inner">
+            <span class="card-number">#04</span>
+            <div class="card-labels">
+              <span class="label label-frontend">Frontend</span>
+            </div>
+            <h3 class="card-title">Dark mode refinements</h3>
+            <div class="card-footer">
+              <div class="card-assignee">
+                <div class="card-avatar">KL</div>
+              </div>
+              <span class="card-due">Mar 18</span>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- ---- IN PROGRESS ---- -->
+    <section class="category">
+      <div class="category-header">
+        <h2 class="category-title">In Progress</h2>
+        <span class="category-count">4</span>
+      </div>
+      <hr class="category-rule">
+      <div class="card-grid">
+
+        <!-- LG: Payment integration testing (URGENT) -->
+        <article class="card card-lg card-urgent" data-card="payment">
+          <div class="card-inner">
+            <span class="card-number">#05</span>
+            <div class="card-labels">
+              <span class="label label-urgent">Urgent</span>
+              <span class="label label-backend">Backend</span>
+            </div>
+            <h3 class="card-title">Payment integration testing</h3>
+            <p class="card-description">
+              <span class="pull-quote-mark">&ldquo;</span>
+              End-to-end testing of the Stripe payment pipeline including checkout flow, subscription lifecycle management, webhook reliability, and edge cases around failed charges, refunds, and plan downgrades. Must verify PCI compliance before launch.
+            </p>
+            <div class="card-footer">
+              <div class="card-assignee">
+                <div class="card-avatar">JD</div>
+                <span class="card-assignee-name">J. Dawson</span>
+              </div>
+              <span class="card-due overdue">Feb 24 -- Overdue</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- SM -->
+        <article class="card card-sm" data-card="notifications">
+          <div class="card-inner">
+            <span class="card-number">#06</span>
+            <div class="card-labels">
+              <span class="label label-frontend">Frontend</span>
+            </div>
+            <h3 class="card-title">Notification preferences</h3>
+            <div class="card-footer">
+              <div class="card-assignee">
+                <div class="card-avatar">KL</div>
+              </div>
+              <span class="card-due">Mar 8</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- SM -->
+        <article class="card card-sm" data-card="perf">
+          <div class="card-inner">
+            <span class="card-number">#07</span>
+            <div class="card-labels">
+              <span class="label label-backend">Backend</span>
+            </div>
+            <h3 class="card-title">Database query optimization</h3>
+            <div class="card-footer">
+              <div class="card-assignee">
+                <div class="card-avatar">JD</div>
+              </div>
+              <span class="card-due">Mar 12</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- MD: Mobile navigation redesign -->
+        <article class="card card-md" data-card="mobile-nav">
+          <div class="card-inner">
+            <span class="card-number">#08</span>
+            <div class="card-labels">
+              <span class="label label-design">Design</span>
+              <span class="label label-frontend">Frontend</span>
+            </div>
+            <h3 class="card-title">Mobile navigation redesign</h3>
+            <p class="card-description">Rethink the bottom navigation pattern for mobile viewports. Current implementation causes thumb reach issues on larger devices. Evaluate gesture-based navigation and swipe-to-switch patterns.</p>
+            <div class="card-footer">
+              <div class="card-assignee">
+                <div class="card-avatar">MR</div>
+                <span class="card-assignee-name">M. Reyes</span>
+              </div>
+              <span class="card-due">Mar 10</span>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- ---- REVIEW ---- -->
+    <section class="category">
+      <div class="category-header">
+        <h2 class="category-title">Review</h2>
+        <span class="category-count">2</span>
+      </div>
+      <hr class="category-rule">
+      <div class="card-grid">
+
+        <!-- MD: User profile settings page (due today) -->
+        <article class="card card-md card-urgent" data-card="profile">
+          <div class="card-inner">
+            <span class="card-number">#09</span>
+            <div class="card-labels">
+              <span class="label label-frontend">Frontend</span>
+              <span class="label label-design">Design</span>
+            </div>
+            <h3 class="card-title">User profile settings page</h3>
+            <p class="card-description">Complete implementation of the settings page with avatar upload, name and email editing, theme preferences, and notification toggles. Needs final design review before merging.</p>
+            <div class="card-footer">
+              <div class="card-assignee">
+                <div class="card-avatar">KL</div>
+                <span class="card-assignee-name">K. Lee</span>
+              </div>
+              <span class="card-due overdue">Feb 26 -- Today</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- SM -->
+        <article class="card card-sm" data-card="export">
+          <div class="card-inner">
+            <span class="card-number">#10</span>
+            <div class="card-labels">
+              <span class="label label-backend">Backend</span>
+            </div>
+            <h3 class="card-title">CSV export functionality</h3>
+            <div class="card-footer">
+              <div class="card-assignee">
+                <div class="card-avatar">JD</div>
+              </div>
+              <span class="card-due">Mar 1</span>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- ---- DONE ---- -->
+    <section class="category">
+      <div class="category-header">
+        <h2 class="category-title">Done</h2>
+        <span class="category-count">1</span>
+      </div>
+      <hr class="category-rule">
+      <div class="card-grid">
+
+        <!-- SM -->
+        <article class="card card-sm" data-card="auth">
+          <div class="card-inner">
+            <span class="card-number">#11</span>
+            <div class="card-labels">
+              <span class="label label-backend">Backend</span>
+              <span class="label label-frontend">Frontend</span>
+            </div>
+            <h3 class="card-title">OAuth2 integration</h3>
+            <div class="card-footer">
+              <div class="card-assignee">
+                <div class="card-avatar">JD</div>
+              </div>
+              <span class="card-due" style="text-decoration: line-through;">Feb 20</span>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ======================================================
+       FOOTER -- Architectural Title Block
+  ====================================================== -->
+  <footer class="page-footer">
+    <div class="title-block">
+      <div class="title-block-main">
+        <div class="title-block-cell">
+          <span class="title-block-label">Project</span>
+          <span class="title-block-value">Alpha</span>
+        </div>
+        <div class="title-block-cell">
+          <span class="title-block-label">Date</span>
+          <span class="title-block-value">Feb 2026</span>
+        </div>
+        <div class="title-block-cell">
+          <span class="title-block-label">Tasks</span>
+          <span class="title-block-value">11</span>
+        </div>
+        <div class="title-block-cell">
+          <span class="title-block-label">Scale</span>
+          <span class="title-block-value">1 : 1</span>
+        </div>
+      </div>
+      <div class="title-block-project">
+        <span class="title-block-project-name">Project Alpha</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ======================================================
+       SCALE INDICATOR (bottom-right)
+  ====================================================== -->
+  <div class="scale-indicator" aria-hidden="true">
+    <div class="scale-bar">
+      <div class="scale-bar-tick"></div>
+      <div class="scale-bar-segment"></div>
+      <div class="scale-bar-tick"></div>
+      <div class="scale-bar-segment"></div>
+      <div class="scale-bar-tick"></div>
+      <div class="scale-bar-segment"></div>
+      <div class="scale-bar-tick"></div>
+      <div class="scale-bar-segment"></div>
+      <div class="scale-bar-tick"></div>
+    </div>
+    <span class="scale-text">1:1</span>
+  </div>
+
+  <!-- ======================================================
+       CARD DETAIL MODAL
+  ====================================================== -->
+  <div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal" id="modal">
+      <div class="modal-urgent-stripe" id="modalStripe" style="display:none;"></div>
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalTitle">Payment integration testing</h2>
+        <button class="modal-close" id="modalCloseBtn" aria-label="Close modal">[X] Close</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-section">
+          <h3 class="modal-section-title">Description</h3>
+          <p class="modal-description" id="modalDesc">End-to-end testing of the Stripe payment pipeline including checkout flow, subscription lifecycle management, webhook reliability, and edge cases around failed charges, refunds, and plan downgrades. Must verify PCI compliance before launch.</p>
+        </div>
+        <div class="modal-section">
+          <div class="modal-meta-grid">
+            <div class="modal-meta-item">
+              <h3 class="modal-section-title" style="margin-bottom:10px;">Labels</h3>
+              <div class="modal-labels" id="modalLabels">
+                <span class="label label-urgent">Urgent</span>
+                <span class="label label-backend">Backend</span>
+              </div>
+            </div>
+            <div class="modal-meta-item">
+              <h3 class="modal-section-title" style="margin-bottom:10px;">Assignees</h3>
+              <div class="modal-assignees" id="modalAssignees">
+                <div class="modal-assignee">
+                  <div class="card-avatar">JD</div>
+                  <span class="modal-assignee-name">J. Dawson</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-section">
+          <div class="modal-meta-grid">
+            <div class="modal-meta-item">
+              <span class="modal-meta-label">Due Date</span>
+              <span class="modal-meta-value" id="modalDue" style="color:var(--accent);font-weight:600;">Feb 24 -- Overdue</span>
+            </div>
+            <div class="modal-meta-item">
+              <span class="modal-meta-label">Issue</span>
+              <span class="modal-meta-value" id="modalNumber">#05</span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-section">
+          <h3 class="modal-section-title">Comments</h3>
+          <div class="comment">
+            <p class="comment-author">J. Dawson <span class="comment-time">2 days ago</span></p>
+            <p class="comment-text">Stripe test mode is configured. Working through the webhook signature verification for the checkout.session.completed event. Should have the happy path covered by end of day.</p>
+          </div>
+          <div class="comment">
+            <p class="comment-author">K. Lee <span class="comment-time">1 day ago</span></p>
+            <p class="comment-text">Make sure we test the subscription update flow as well. Had issues with proration calculations on the previous sprint.</p>
+          </div>
+          <div class="comment">
+            <p class="comment-author">M. Reyes <span class="comment-time">3 hours ago</span></p>
+            <p class="comment-text">The checkout UI is ready on the frontend side. Just needs the backend endpoints to be stable for integration.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================
+       JAVASCRIPT -- Theme, Modal, Escape
+  ====================================================== -->
+  <script>
+    (function() {
+      var toggle = document.getElementById('themeToggle');
+      var backdrop = document.getElementById('modalBackdrop');
+      var closeBtn = document.getElementById('modalCloseBtn');
+      // Theme cycle: blueprint (default) -> dark (deeper) -> light (tracing paper)
+      var themes = ['blueprint', 'dark', 'light'];
+      var themeLabels = { 'blueprint': 'Blueprint', 'dark': 'Deep', 'light': 'Tracing' };
+      var stored = localStorage.getItem('blueprint-theme') || 'blueprint';
+      applyTheme(stored);
+
+      function applyTheme(theme) {
+        document.documentElement.classList.remove('dark', 'light');
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else if (theme === 'light') {
+          document.documentElement.classList.add('light');
+        }
+        toggle.textContent = themeLabels[theme] || 'Blueprint';
+      }
+
+      toggle.addEventListener('click', function() {
+        var currentIdx = themes.indexOf(stored);
+        var nextIdx = (currentIdx + 1) % themes.length;
+        stored = themes[nextIdx];
+        applyTheme(stored);
+        localStorage.setItem('blueprint-theme', stored);
+      });
+
+      var cards = document.querySelectorAll('.card');
+      var modalData = {
+        'payment':       { title: 'Payment integration testing', number: '#05', desc: 'End-to-end testing of the Stripe payment pipeline including checkout flow, subscription lifecycle management, webhook reliability, and edge cases around failed charges, refunds, and plan downgrades. Must verify PCI compliance before launch.', due: 'Feb 24 -- Overdue', dueStyle: 'color:var(--accent);font-weight:600', urgent: true, labels: ['Urgent','Backend'], assignee: 'J. Dawson', avatar: 'JD' },
+        'onboarding':    { title: 'Redesign onboarding flow', number: '#03', desc: 'Map current user drop-off points and design a streamlined three-step onboarding experience with progressive disclosure and contextual tooltips.', due: 'Mar 4', dueStyle: 'color:var(--accent)', urgent: false, labels: ['Design','Frontend'], assignee: 'M. Reyes', avatar: 'MR' },
+        'mobile-nav':    { title: 'Mobile navigation redesign', number: '#08', desc: 'Rethink the bottom navigation pattern for mobile viewports. Current implementation causes thumb reach issues on larger devices. Evaluate gesture-based navigation and swipe-to-switch patterns.', due: 'Mar 10', dueStyle: '', urgent: false, labels: ['Design','Frontend'], assignee: 'M. Reyes', avatar: 'MR' },
+        'profile':       { title: 'User profile settings page', number: '#09', desc: 'Complete implementation of the settings page with avatar upload, name and email editing, theme preferences, and notification toggles. Needs final design review before merging.', due: 'Feb 26 -- Today', dueStyle: 'color:var(--accent);font-weight:600', urgent: true, labels: ['Frontend','Design'], assignee: 'K. Lee', avatar: 'KL' },
+        'api-docs':      { title: 'API documentation update', number: '#01', desc: 'Review and update all endpoint documentation to reflect recent schema changes and new query parameters.', due: 'Mar 14', dueStyle: '', urgent: false, labels: ['Backend'], assignee: 'J. Dawson', avatar: 'JD' },
+        'analytics':     { title: 'Analytics dashboard research', number: '#02', desc: 'Investigate analytics libraries and dashboard layout patterns for the upcoming metrics feature.', due: 'Mar 20', dueStyle: '', urgent: false, labels: ['Research'], assignee: 'K. Lee', avatar: 'KL' },
+        'dark-mode':     { title: 'Dark mode refinements', number: '#04', desc: 'Adjust contrast ratios, border colors, and shadow opacity values in dark mode for improved readability.', due: 'Mar 18', dueStyle: '', urgent: false, labels: ['Frontend'], assignee: 'K. Lee', avatar: 'KL' },
+        'notifications': { title: 'Notification preferences', number: '#06', desc: 'Build the notification preferences UI with toggles for email, push, and in-app notification channels.', due: 'Mar 8', dueStyle: '', urgent: false, labels: ['Frontend'], assignee: 'K. Lee', avatar: 'KL' },
+        'perf':          { title: 'Database query optimization', number: '#07', desc: 'Profile slow queries on the board and card listing endpoints. Add indexes and optimize N+1 patterns.', due: 'Mar 12', dueStyle: '', urgent: false, labels: ['Backend'], assignee: 'J. Dawson', avatar: 'JD' },
+        'export':        { title: 'CSV export functionality', number: '#10', desc: 'Implement server-side CSV generation for board data export with configurable column selection.', due: 'Mar 1', dueStyle: '', urgent: false, labels: ['Backend'], assignee: 'J. Dawson', avatar: 'JD' },
+        'auth':          { title: 'OAuth2 integration', number: '#11', desc: 'Google OAuth2 provider integration with automatic account linking for existing email users.', due: 'Feb 20', dueStyle: 'text-decoration:line-through', urgent: false, labels: ['Backend','Frontend'], assignee: 'J. Dawson', avatar: 'JD' }
+      };
+      var labelClass = { 'Urgent':'label-urgent','Design':'label-design','Frontend':'label-frontend','Backend':'label-backend','Research':'label-research' };
+      function openModal(key) {
+        var d = modalData[key]; if (!d) return;
+        document.getElementById('modalTitle').textContent = d.title;
+        document.getElementById('modalNumber').textContent = d.number;
+        document.getElementById('modalDesc').textContent = d.desc;
+        var dueEl = document.getElementById('modalDue');
+        dueEl.textContent = d.due;
+        dueEl.setAttribute('style', d.dueStyle || '');
+        document.getElementById('modalStripe').style.display = d.urgent ? 'block' : 'none';
+        var lc = document.getElementById('modalLabels'); lc.innerHTML = '';
+        d.labels.forEach(function(l) { var s = document.createElement('span'); s.className = 'label ' + (labelClass[l]||''); s.textContent = l; lc.appendChild(s); });
+        var ac = document.getElementById('modalAssignees'); ac.innerHTML = '';
+        var aDiv = document.createElement('div'); aDiv.className = 'modal-assignee';
+        aDiv.innerHTML = '<div class="card-avatar">' + d.avatar + '</div><span class="modal-assignee-name">' + d.assignee + '</span>';
+        ac.appendChild(aDiv);
+        backdrop.classList.add('open');
+      }
+      function closeModal() { backdrop.classList.remove('open'); }
+      cards.forEach(function(c) { c.addEventListener('click', function() { openModal(c.getAttribute('data-card')); }); });
+      closeBtn.addEventListener('click', closeModal);
+      backdrop.addEventListener('click', function(e) { if (e.target === backdrop) closeModal(); });
+      document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeModal(); });
+    })();
+  </script>
+</body>
+</html>

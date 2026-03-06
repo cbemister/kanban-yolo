@@ -31,31 +31,37 @@ export default function LabelPicker({ boardId, selectedLabelIds, onToggle }: Lab
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
-        style={{ color: "#209dd7" }}
+        className="btn btn-secondary btn-sm"
       >
         Labels
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full mt-1 w-52 bg-white border border-gray-200 rounded-lg shadow-lg z-20 py-1">
+        <div className="dropdown-panel absolute left-0 top-full mt-1 w-52 py-1">
           {labels.length === 0 && (
-            <p className="px-3 py-2 text-xs" style={{ color: "#888888" }}>No labels created yet.</p>
+            <p className="px-3 py-2 text-xs" style={{ color: "var(--text-muted)" }}>No labels created yet.</p>
           )}
           {labels.map((label) => (
             <button
               key={label.id}
               type="button"
               onClick={() => onToggle(label.id)}
-              className="flex items-center gap-2 w-full px-3 py-2 hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-2 w-full px-3 py-2 transition-colors"
+              style={{ background: "transparent" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "var(--bg-card-hover)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
             >
               <span
-                className="w-4 h-4 flex-shrink-0 rounded border border-gray-300 flex items-center justify-center text-xs font-bold"
-                style={selectedLabelIds.includes(label.id) ? { background: "#753991", borderColor: "#753991", color: "white" } : {}}
+                className="w-4 h-4 flex-shrink-0 flex items-center justify-center text-xs font-bold"
+                style={
+                  selectedLabelIds.includes(label.id)
+                    ? { background: "var(--accent)", border: "1px solid var(--accent)", color: "white" }
+                    : { border: "1px solid var(--border-color)" }
+                }
               >
                 {selectedLabelIds.includes(label.id) ? "x" : ""}
               </span>
-              <LabelChip label={label} size="sm" />
+              <LabelChip label={label} />
             </button>
           ))}
         </div>

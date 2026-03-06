@@ -3,17 +3,36 @@
 import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { isPast, isToday, isTomorrow, differenceInDays, parseISO } from "date-fns";
 import type { Card as CardType } from "@/types";
 import ConfirmDialog from "./ConfirmDialog";
 import LabelChip from "./LabelChip";
 import UserAvatar from "./UserAvatar";
 import DueDateBadge from "./DueDateBadge";
 
+function getCardSize(card: CardType): "card-sm" | "card-md" | "card-lg" {
+  const hasDescription = !!card.details?.trim();
+  const labelCount = card.labels?.length ?? 0;
+  const descLength = card.details?.length ?? 0;
+
+  if (hasDescription && descLength > 100) return "card-lg";
+  if (hasDescription || labelCount >= 2) return "card-md";
+  return "card-sm";
+}
+
 interface CardProps {
   card: CardType;
   columnId: string;
   onDelete: (columnId: string, cardId: string) => void;
   onClick: (card: CardType) => void;
+}
+
+function isUrgentDate(dueDate: string | null | undefined): boolean {
+  if (!dueDate) return false;
+  const date = parseISO(dueDate);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return isPast(date) || isToday(date) || isTomorrow(date) || differenceInDays(date, today) <= 2;
 }
 
 export default function Card({ card, columnId, onDelete, onClick }: CardProps) {
@@ -37,59 +56,124 @@ export default function Card({ card, columnId, onDelete, onClick }: CardProps) {
   const visibleAssignees = (card.assignees ?? []).slice(0, 3);
   const overflowCount = (card.assignees?.length ?? 0) - 3;
   const hasFooter = (card.labels?.length ?? 0) > 0 || (card.assignees?.length ?? 0) > 0 || card.dueDate;
+  const urgent = isUrgentDate(card.dueDate);
+  const cardSize = getCardSize(card);
+
+  const paddingMap = {
+    "card-sm": "12px 16px",
+    "card-md": "16px 20px",
+    "card-lg": "24px 28px",
+  };
+
+  const titleSizeMap = {
+    "card-sm": 15,
+    "card-md": 18,
+    "card-lg": 18,
+  };
 
   return (
     <>
       <div
         ref={setNodeRef}
         style={style}
-        className="group relative bg-white rounded-lg shadow-sm p-3 cursor-grab active:cursor-grabbing border border-gray-100 hover:shadow-md transition-shadow"
+        className={`${cardSize} editorial-card group relative cursor-grab active:cursor-grabbing flex flex-col${urgent ? " editorial-card-urgent" : ""}`}
         onClick={() => !isDragging && onClick(card)}
         {...attributes}
         {...listeners}
       >
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setConfirmDelete(true);
-          }}
-          onPointerDown={(e) => e.stopPropagation()}
-          className="absolute top-2 right-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity w-5 h-5 rounded-full bg-gray-200 hover:bg-red-100 hover:text-red-600 flex items-center justify-center text-gray-500 text-xs"
-          aria-label="Delete card"
+        <div
+          className="editorial-card-inner flex flex-col"
+          style={{ padding: paddingMap[cardSize], height: "100%" }}
         >
-          x
-        </button>
-        <h3 className="font-semibold text-sm text-gray-900 pr-7 mb-1 leading-snug">
-          {card.title}
-        </h3>
-        {card.details && (
-          <p className="text-xs leading-relaxed line-clamp-2 mb-2" style={{ color: "#888888" }}>
-            {card.details}
-          </p>
-        )}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setConfirmDelete(true);
+            }}
+            onPointerDown={(e) => e.stopPropagation()}
+            className="btn-icon absolute top-2 right-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity w-5 h-5 flex items-center justify-center text-xs hover:text-[var(--accent-danger)]"
+            aria-label="Delete card"
+            style={{ zIndex: 2 }}
+          >
+            x
+          </button>
 
-        {hasFooter && (
-          <div className="flex items-center gap-2 flex-wrap mt-1">
-            {card.dueDate && <DueDateBadge dueDate={card.dueDate} />}
-            {(card.labels ?? []).slice(0, 3).map((cl) => (
-              <LabelChip key={cl.labelId} label={cl.label} size="sm" />
-            ))}
-            {visibleAssignees.length > 0 && (
-              <div className="flex -space-x-1 ml-auto">
-                {visibleAssignees.map((a) => (
-                  <UserAvatar key={a.userId} user={a.user} size="sm" />
-                ))}
-                {overflowCount > 0 && (
-                  <span
-                    className="w-6 h-6 rounded-full bg-gray-200 text-gray-600 text-xs flex items-center justify-center font-medium"
-                  >
-                    +{overflowCount}
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-        )}
+          {/* Labels */}
+          {(card.labels?.length ?? 0) > 0 && (
+            <div className="flex gap-2 flex-wrap mb-2">
+              {(card.labels ?? []).slice(0, 3).map((cl) => (
+                cardSize === "card-sm" ? (
+                  <LabelChip key={cl.labelId} label={cl.label} size="sm" />
+                ) : (
+                  <LabelChip key={cl.labelId} label={cl.label} size="sm" />
+                )
+              ))}
+            </div>
+          )}
+
+          <h3
+            className="mb-1"
+            style={{
+              fontFamily: "var(--font-serif)",
+              fontSize: titleSizeMap[cardSize],
+              fontWeight: 400,
+              lineHeight: cardSize === "card-sm" ? 1.35 : 1.3,
+              color: "var(--text-primary)",
+              paddingRight: 24,
+            }}
+          >
+            {card.title}
+          </h3>
+
+          {card.details && (
+            <p
+              className="editorial-card-description line-clamp-2 mb-2"
+              style={{
+                fontSize: 13,
+                color: "var(--text-secondary)",
+                lineHeight: 1.6,
+                flex: cardSize === "card-lg" ? 1 : undefined,
+              }}
+            >
+              {card.details}
+            </p>
+          )}
+
+          {hasFooter && (
+            <div
+              className="flex items-center gap-2 flex-wrap mt-auto"
+              style={{
+                borderTop: cardSize === "card-sm" ? "none" : "1px solid var(--border-light)",
+                paddingTop: cardSize === "card-sm" ? 6 : 10,
+                marginTop: cardSize === "card-sm" ? 4 : 10,
+              }}
+            >
+              {card.dueDate && <DueDateBadge dueDate={card.dueDate} />}
+              {visibleAssignees.length > 0 && (
+                <div className="flex -space-x-1 ml-auto">
+                  {visibleAssignees.map((a) => (
+                    <UserAvatar key={a.userId} user={a.user} size="sm" />
+                  ))}
+                  {overflowCount > 0 && (
+                    <span
+                      className="flex items-center justify-center font-medium select-none"
+                      style={{
+                        width: 24,
+                        height: 24,
+                        fontSize: 10,
+                        background: "var(--bg-surface)",
+                        color: "var(--text-muted)",
+                        border: "1px solid var(--border-color)",
+                      }}
+                    >
+                      +{overflowCount}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {confirmDelete && (

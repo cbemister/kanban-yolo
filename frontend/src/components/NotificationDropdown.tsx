@@ -44,40 +44,100 @@ export default function NotificationDropdown({ onClose, onReadAll }: Props) {
   const unread = notifications.filter((n) => !n.read).length;
 
   return (
-    <div className="absolute right-0 top-full mt-1 w-80 bg-white border border-gray-200 rounded-xl shadow-xl z-30 overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-        <h3 className="font-semibold text-sm" style={{ color: "#032147" }}>Notifications</h3>
-        <div className="flex items-center gap-3">
+    <div
+      className="dropdown-panel"
+      style={{
+        right: 0,
+        top: "100%",
+        marginTop: "4px",
+        width: "320px",
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "12px 16px",
+          borderBottom: "1px solid var(--border-light)",
+        }}
+      >
+        <h3 style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-primary)", fontFamily: "var(--font-sans)" }}>
+          Notifications
+        </h3>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           {unread > 0 && (
-            <button onClick={markAllRead} className="text-xs" style={{ color: "#209dd7" }}>
+            <button
+              onClick={markAllRead}
+              className="btn btn-ghost btn-sm"
+              style={{ padding: "2px 6px" }}
+            >
               Mark all read
             </button>
           )}
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-sm font-bold">x</button>
+          <button
+            onClick={onClose}
+            className="btn-icon"
+            aria-label="Close notifications"
+            style={{ fontSize: "13px", fontWeight: 700 }}
+          >
+            x
+          </button>
         </div>
       </div>
 
-      <div className="max-h-80 overflow-y-auto">
+      <div style={{ maxHeight: "320px", overflowY: "auto" }}>
         {loading ? (
-          <p className="text-sm text-center py-6" style={{ color: "#888888" }}>Loading...</p>
+          <p style={{ fontSize: "13px", textAlign: "center", padding: "24px", color: "var(--text-muted)" }}>
+            Loading...
+          </p>
         ) : notifications.length === 0 ? (
-          <p className="text-sm text-center py-6 italic" style={{ color: "#888888" }}>No notifications</p>
+          <p style={{ fontSize: "13px", textAlign: "center", padding: "24px", fontStyle: "italic", color: "var(--text-muted)" }}>
+            No notifications
+          </p>
         ) : (
           notifications.map((n) => {
             const content = (
               <div
-                className={`flex gap-3 px-4 py-3 border-b border-gray-50 cursor-pointer hover:bg-gray-50 transition-colors ${!n.read ? "bg-blue-50/50" : ""}`}
+                style={{
+                  display: "flex",
+                  gap: "12px",
+                  padding: "12px 16px",
+                  borderBottom: "1px solid var(--border-light)",
+                  cursor: "pointer",
+                  background: !n.read ? "var(--bg-card-hover)" : "transparent",
+                  transition: "background var(--transition-fast)",
+                }}
                 onClick={() => !n.read && markRead(n.id)}
+                onMouseEnter={(e) => {
+                  if (n.read) (e.currentTarget as HTMLDivElement).style.background = "var(--bg-surface)";
+                }}
+                onMouseLeave={(e) => {
+                  if (n.read) (e.currentTarget as HTMLDivElement).style.background = "transparent";
+                }}
               >
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate" style={{ color: "#032147" }}>{n.title}</p>
-                  <p className="text-xs mt-0.5 line-clamp-2" style={{ color: "#888888" }}>{n.body}</p>
-                  <p className="text-xs mt-1" style={{ color: "#888888" }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: "13px", fontWeight: 500, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {n.title}
+                  </p>
+                  <p style={{ fontSize: "11px", marginTop: "2px", color: "var(--text-secondary)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" } as React.CSSProperties}>
+                    {n.body}
+                  </p>
+                  <p style={{ fontSize: "11px", marginTop: "4px", color: "var(--text-muted)" }}>
                     {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}
                   </p>
                 </div>
                 {!n.read && (
-                  <div className="w-2 h-2 rounded-full flex-shrink-0 mt-1.5" style={{ background: "#209dd7" }} />
+                  <div
+                    style={{
+                      width: "6px",
+                      height: "6px",
+                      background: "var(--accent)",
+                      flexShrink: 0,
+                      marginTop: "6px",
+                    }}
+                  />
                 )}
               </div>
             );

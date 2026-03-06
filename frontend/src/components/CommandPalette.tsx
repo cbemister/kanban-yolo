@@ -41,47 +41,109 @@ export default function CommandPalette({ boardId, columns, onClose, onNewCard }:
 
   return (
     <div
-      className="fixed inset-0 flex items-start justify-center pt-[15vh] z-50 px-4"
-      style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
+      className="modal-backdrop-overlay"
+      style={{ alignItems: "flex-start", paddingTop: "15vh" }}
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg bg-white rounded-xl shadow-2xl overflow-hidden"
+        style={{
+          width: "100%",
+          maxWidth: "512px",
+          background: "var(--bg-base)",
+          border: "1px solid var(--border-color)",
+          overflow: "hidden",
+          zIndex: "var(--z-modal)",
+        }}
         onClick={(e) => e.stopPropagation()}
       >
-        <Command className="[&_[cmdk-input-wrapper]]:border-b [&_[cmdk-input-wrapper]]:border-gray-100">
-          <Command.Input
-            autoFocus
-            value={query}
-            onValueChange={setQuery}
-            placeholder="Search boards, cards, actions..."
-            className="w-full px-4 py-3.5 text-sm outline-none placeholder-gray-400"
-            style={{ color: "#032147" }}
-          />
-          <Command.List className="max-h-72 overflow-y-auto p-2">
-            <Command.Empty className="py-6 text-center text-sm" style={{ color: "#888888" }}>
+        <Command
+          style={{
+            fontFamily: "var(--font-sans)",
+          }}
+        >
+          <div
+            style={{
+              borderBottom: "1px solid var(--border-light)",
+            }}
+          >
+            <Command.Input
+              autoFocus
+              value={query}
+              onValueChange={setQuery}
+              placeholder="Search boards, cards, actions..."
+              style={{
+                width: "100%",
+                padding: "14px 16px",
+                fontSize: "14px",
+                color: "var(--text-primary)",
+                background: "var(--bg-base)",
+                border: "none",
+                outline: "none",
+                fontFamily: "var(--font-sans)",
+              }}
+            />
+          </div>
+          <Command.List
+            style={{
+              maxHeight: "288px",
+              overflowY: "auto",
+              padding: "8px",
+            }}
+          >
+            <Command.Empty
+              style={{
+                padding: "24px",
+                textAlign: "center",
+                fontSize: "13px",
+                color: "var(--text-muted)",
+              }}
+            >
               No results found.
             </Command.Empty>
 
             {/* Actions */}
             <Command.Group
               heading="Actions"
-              className="[&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wide"
-              style={{ color: "#888888" }}
+              style={
+                {
+                  "--cmdk-group-heading-color": "var(--text-muted)",
+                } as React.CSSProperties
+              }
             >
+              <style>{`
+                [cmdk-group-heading] {
+                  font-family: var(--font-sans);
+                  font-size: 10px;
+                  font-weight: 700;
+                  letter-spacing: 0.15em;
+                  text-transform: uppercase;
+                  color: var(--text-muted);
+                  padding: 6px 8px 4px;
+                }
+                [cmdk-item] {
+                  display: flex;
+                  align-items: center;
+                  gap: 8px;
+                  padding: 8px 12px;
+                  cursor: pointer;
+                  font-size: 13px;
+                  color: var(--text-primary);
+                  transition: background var(--transition-fast);
+                }
+                [cmdk-item][aria-selected="true"] {
+                  background: var(--bg-card-hover);
+                }
+              `}</style>
               {onNewCard && (
                 <Command.Item
                   onSelect={() => { onNewCard(); onClose(); }}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-sm aria-selected:bg-blue-50"
-                  style={{ color: "#032147" }}
                 >
-                  <span style={{ color: "#209dd7" }}>+</span> New card
+                  <span style={{ color: "var(--accent)", fontSize: "15px", lineHeight: 1 }}>+</span>
+                  New card
                 </Command.Item>
               )}
               <Command.Item
                 onSelect={() => { router.push("/boards"); onClose(); }}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-sm aria-selected:bg-blue-50"
-                style={{ color: "#032147" }}
               >
                 All boards
               </Command.Item>
@@ -89,21 +151,20 @@ export default function CommandPalette({ boardId, columns, onClose, onNewCard }:
 
             {/* Cards */}
             {filteredCards.length > 0 && (
-              <Command.Group
-                heading="Cards"
-                className="[&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wide"
-                style={{ color: "#888888" }}
-              >
+              <Command.Group heading="Cards">
                 {filteredCards.map((card) => (
                   <Command.Item
                     key={card.id}
                     value={card.title}
                     onSelect={() => { router.push(`/boards/${boardId}?card=${card.id}`); onClose(); }}
-                    className="flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer text-sm aria-selected:bg-blue-50"
-                    style={{ color: "#032147" }}
+                    style={{ justifyContent: "space-between" }}
                   >
-                    <span className="truncate">{card.title}</span>
-                    <span className="text-xs flex-shrink-0 ml-2" style={{ color: "#888888" }}>{card.columnTitle}</span>
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {card.title}
+                    </span>
+                    <span style={{ fontSize: "11px", color: "var(--text-muted)", flexShrink: 0, marginLeft: "8px" }}>
+                      {card.columnTitle}
+                    </span>
                   </Command.Item>
                 ))}
               </Command.Group>
@@ -111,18 +172,12 @@ export default function CommandPalette({ boardId, columns, onClose, onNewCard }:
 
             {/* Boards */}
             {filteredBoards.length > 0 && (
-              <Command.Group
-                heading="Boards"
-                className="[&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wide"
-                style={{ color: "#888888" }}
-              >
+              <Command.Group heading="Boards">
                 {filteredBoards.map((board: { id: string; title: string }) => (
                   <Command.Item
                     key={board.id}
                     value={board.title}
                     onSelect={() => { router.push(`/boards/${board.id}`); onClose(); }}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-sm aria-selected:bg-blue-50"
-                    style={{ color: "#032147" }}
                   >
                     {board.title}
                   </Command.Item>

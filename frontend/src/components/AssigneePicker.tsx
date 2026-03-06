@@ -31,32 +31,38 @@ export default function AssigneePicker({ boardId, assigneeIds, onToggle }: Assig
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
-        style={{ color: "#209dd7" }}
+        className="btn btn-secondary btn-sm"
       >
         Assignees
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-20 py-1">
+        <div className="dropdown-panel absolute left-0 top-full mt-1 w-56 py-1">
           {members.length === 0 && (
-            <p className="px-3 py-2 text-xs" style={{ color: "#888888" }}>No board members yet.</p>
+            <p className="px-3 py-2 text-xs" style={{ color: "var(--text-muted)" }}>No board members yet.</p>
           )}
           {members.map((member) => (
             <button
               key={member.userId}
               type="button"
               onClick={() => onToggle(member.userId)}
-              className="flex items-center gap-2 w-full px-3 py-2 hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-2 w-full px-3 py-2 transition-colors"
+              style={{ background: "transparent" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "var(--bg-card-hover)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
             >
               <span
-                className="w-4 h-4 flex-shrink-0 rounded border border-gray-300 flex items-center justify-center text-xs font-bold"
-                style={assigneeIds.includes(member.userId) ? { background: "#753991", borderColor: "#753991", color: "white" } : {}}
+                className="w-4 h-4 flex-shrink-0 flex items-center justify-center text-xs font-bold"
+                style={
+                  assigneeIds.includes(member.userId)
+                    ? { background: "var(--accent)", border: "1px solid var(--accent)", color: "white" }
+                    : { border: "1px solid var(--border-color)" }
+                }
               >
                 {assigneeIds.includes(member.userId) ? "x" : ""}
               </span>
               <UserAvatar user={member.user} size="sm" />
-              <span className="text-sm text-gray-700 truncate">{member.user.name ?? member.user.email}</span>
+              <span className="text-sm truncate" style={{ color: "var(--text-primary)" }}>{member.user.name ?? member.user.email}</span>
             </button>
           ))}
         </div>

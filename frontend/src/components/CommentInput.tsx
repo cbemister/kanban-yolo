@@ -41,15 +41,13 @@ export default function CommentInput({ cardId }: CommentInputProps) {
         onChange={(e) => setContent(e.target.value)}
         rows={3}
         placeholder="Write a comment..."
-        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 resize-none"
-        style={{ color: "#032147", "--tw-ring-color": "#209dd7" } as React.CSSProperties}
+        className="input w-full resize-none"
       />
       <div className="flex justify-end mt-2">
         <button
           type="submit"
           disabled={submitting || !content.trim()}
-          className="px-4 py-2 rounded-lg text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-60"
-          style={{ background: "#753991" }}
+          className="btn btn-primary"
         >
           {submitting ? "Posting..." : "Comment"}
         </button>

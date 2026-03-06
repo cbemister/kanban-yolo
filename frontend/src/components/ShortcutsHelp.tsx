@@ -19,34 +19,76 @@ const SHORTCUTS: Shortcut[] = [
 
 export default function ShortcutsHelp({ onClose }: ShortcutsHelpProps) {
   return (
-    <div
-      className="fixed inset-0 flex items-center justify-center z-50"
-      style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}
-      onClick={onClose}
-    >
+    <div className="modal-backdrop-overlay" onClick={onClose}>
       <div
-        className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm mx-4"
+        className="modal-panel modal-panel-sm"
+        style={{ padding: "28px 32px" }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold" style={{ color: "#032147" }}>Keyboard Shortcuts</h2>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            marginBottom: "24px",
+          }}
+        >
+          <div>
+            <h2
+              className="heading-serif"
+              style={{ fontSize: "26px", marginBottom: "6px" }}
+            >
+              Keyboard Shortcuts
+            </h2>
+            <div className="title-rule" />
+          </div>
           <button
             onClick={onClose}
-            className="w-7 h-7 rounded-full flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-sm font-bold text-gray-500"
+            className="btn btn-ghost"
+            style={{
+              fontSize: "11px",
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              color: "var(--accent)",
+              flexShrink: 0,
+            }}
           >
-            x
+            [X] CLOSE
           </button>
         </div>
-        <table className="w-full">
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <tbody>
             {SHORTCUTS.map((s) => (
-              <tr key={s.key} className="border-b border-gray-50 last:border-0">
-                <td className="py-2 pr-4">
-                  <kbd className="px-2 py-0.5 rounded text-xs font-mono bg-gray-100 border border-gray-200 text-gray-700">
+              <tr
+                key={s.key}
+                style={{ borderBottom: "1px solid var(--border-light)" }}
+              >
+                <td style={{ padding: "10px 16px 10px 0", width: "1%", whiteSpace: "nowrap" }}>
+                  <kbd
+                    style={{
+                      display: "inline-block",
+                      padding: "2px 7px",
+                      fontSize: "11px",
+                      fontFamily: "var(--font-sans)",
+                      fontWeight: 600,
+                      letterSpacing: "0.04em",
+                      color: "var(--text-primary)",
+                      background: "var(--bg-card)",
+                      border: "1px solid var(--border-color)",
+                    }}
+                  >
                     {s.key}
                   </kbd>
                 </td>
-                <td className="py-2 text-sm" style={{ color: "#032147" }}>{s.description}</td>
+                <td
+                  style={{
+                    padding: "10px 0",
+                    fontSize: "13px",
+                    color: "var(--text-secondary)",
+                  }}
+                >
+                  {s.description}
+                </td>
               </tr>
             ))}
           </tbody>

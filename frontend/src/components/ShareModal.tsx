@@ -51,27 +51,54 @@ export default function ShareModal({ boardId, currentUserId, currentUserRole, on
   }
 
   return (
-    <div
-      className="fixed inset-0 flex items-center justify-center z-50"
-      style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}
-      onClick={onClose}
-    >
+    <div className="modal-backdrop-overlay" onClick={onClose}>
       <div
-        className="bg-white rounded-xl shadow-xl p-6 w-full max-w-lg mx-4 relative"
+        className="modal-panel"
+        style={{ padding: "28px 32px" }}
         onClick={(e) => e.stopPropagation()}
       >
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 w-7 h-7 rounded-full flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-colors text-gray-500 text-sm font-bold"
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            marginBottom: "24px",
+          }}
         >
-          x
-        </button>
-
-        <h2 className="text-lg font-bold mb-1" style={{ color: "#032147" }}>Share Board</h2>
+          <div>
+            <h2
+              className="heading-serif"
+              style={{ fontSize: "28px", marginBottom: "6px" }}
+            >
+              Share Board
+            </h2>
+            <div className="title-rule" />
+          </div>
+          <button
+            onClick={onClose}
+            className="btn btn-ghost"
+            style={{
+              fontSize: "11px",
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              color: "var(--accent)",
+              flexShrink: 0,
+            }}
+          >
+            [X] CLOSE
+          </button>
+        </div>
 
         {currentUserRole === "OWNER" && (
-          <div className="mb-6">
-            <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: "#888888" }}>
+          <div style={{ marginBottom: "28px" }}>
+            <p
+              className="text-section-title"
+              style={{
+                borderBottom: "1px solid var(--border-light)",
+                paddingBottom: "8px",
+                marginBottom: "14px",
+              }}
+            >
               Invite by Email
             </p>
             <InviteForm boardId={boardId} onSuccess={handleInviteSuccess} />
@@ -79,7 +106,14 @@ export default function ShareModal({ boardId, currentUserId, currentUserRole, on
         )}
 
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: "#888888" }}>
+          <p
+            className="text-section-title"
+            style={{
+              borderBottom: "1px solid var(--border-light)",
+              paddingBottom: "8px",
+              marginBottom: "14px",
+            }}
+          >
             Members
           </p>
           <MemberList
