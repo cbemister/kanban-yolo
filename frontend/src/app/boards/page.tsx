@@ -1,117 +1,170 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { useBoards, useBoardMutations } from "@/hooks/useBoards";
 import BoardCard from "@/components/BoardCard";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import NotificationBell from "@/components/NotificationBell";
+import TitleBlockFooter from "@/components/TitleBlockFooter";
+import TemplatePicker from "@/components/TemplatePicker";
 
 export default function BoardsPage() {
   const { data: boards, isLoading } = useBoards();
   const { createBoard, deleteBoard } = useBoardMutations();
   const [creating, setCreating] = useState(false);
-  const [newTitle, setNewTitle] = useState("");
+  const [compact, setCompact] = useState(false);
 
-  async function handleCreate(e: React.FormEvent) {
-    e.preventDefault();
-    const title = newTitle.trim();
-    if (!title) return;
+  useEffect(() => {
+    let ticking = false;
 
-    createBoard.mutate(title, {
+    function onScroll() {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          setCompact(window.scrollY > 100);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    }
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  function handleCreate(title: string, templateId: string) {
+    createBoard.mutate({ title, templateId }, {
       onSuccess: () => {
-        setNewTitle("");
         setCreating(false);
       },
       onError: () => toast.error("Failed to create board"),
     });
   }
 
-  return (
-    <div className="min-h-dvh flex flex-col" style={{ background: "#032147" }}>
-      <header className="flex items-center justify-between px-6 sm:px-10 py-4 border-b border-white/10">
-        <div className="flex items-center gap-3">
-          <div className="w-1 h-8 rounded-full" style={{ background: "#ecad0a" }} />
-          <h1 className="text-2xl font-bold text-white tracking-tight">Kanban</h1>
-        </div>
-        <button
-          onClick={() => signOut({ callbackUrl: "/login" })}
-          className="text-sm text-white/60 hover:text-white transition-colors"
-        >
-          Sign out
-        </button>
-      </header>
+  const boardCount = boards?.length ?? 0;
 
-      <main className="flex-1 px-6 sm:px-10 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-white">Your Boards</h2>
+  return (
+    <div
+      className="min-h-dvh flex flex-col"
+      style={{ position: "relative", zIndex: 1 }}
+    >
+      {/* Sticky toolbar */}
+      <header className={`sticky-toolbar${compact ? " compact" : ""}`}>
+        {/* Left: title block */}
+        <div className="toolbar-left">
+          <Link
+            href="/boards"
+            className="toolbar-back"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              fontSize: "12px",
+              color: "var(--text-muted)",
+              marginBottom: "12px",
+            }}
+          >
+            <span className="text-section-title">Kanban</span>
+          </Link>
+
+          <h1
+            className="heading-serif toolbar-title"
+            style={{
+              fontSize: "clamp(32px, 5vw, 48px)",
+              letterSpacing: "-0.03em",
+              lineHeight: 1.1,
+              transition: "font-size var(--transition-fast)",
+            }}
+          >
+            Your Boards
+          </h1>
+          <hr className="title-rule" style={{ marginTop: "10px" }} />
+        </div>
+
+        {/* Right: actions */}
+        <div style={{ display: "flex", alignItems: "center", gap: "20px", flexWrap: "wrap" }}>
           <button
             onClick={() => setCreating(true)}
-            className="px-4 py-2 rounded-lg text-sm font-medium text-white transition-opacity hover:opacity-90"
-            style={{ background: "#753991" }}
+            className="btn btn-secondary"
+            style={{
+              fontSize: "11px",
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              padding: "6px 14px",
+            }}
           >
             + New Board
           </button>
+
+          <NotificationBell />
+          <ThemeToggle />
+
+          <button
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            className="btn-ghost text-section-title"
+            style={{ fontSize: "10px" }}
+          >
+            Sign out
+          </button>
         </div>
+      </header>
 
-        {creating && (
-          <form onSubmit={handleCreate} className="mb-6 flex gap-2">
-            <input
-              autoFocus
-              type="text"
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-              placeholder="Board name"
-              className="flex-1 max-w-xs border border-white/20 rounded-lg px-3 py-2 text-sm bg-white/10 text-white placeholder-white/40 focus:outline-none focus:border-blue-primary"
-              required
+      {/* Board content */}
+      <main className="flex-1 overflow-y-auto">
+        <div className="board-content">
+          {creating && (
+            <TemplatePicker
+              isPending={createBoard.isPending}
+              onSubmit={handleCreate}
+              onCancel={() => setCreating(false)}
             />
-            <button
-              type="submit"
-              disabled={createBoard.isPending}
-              className="px-4 py-2 rounded-lg text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-60"
-              style={{ background: "#753991" }}
-            >
-              {createBoard.isPending ? "Creating..." : "Create"}
-            </button>
-            <button
-              type="button"
-              onClick={() => { setCreating(false); setNewTitle(""); }}
-              className="px-4 py-2 rounded-lg text-sm font-medium bg-white/10 text-white/70 hover:bg-white/20 transition-colors"
-            >
-              Cancel
-            </button>
-          </form>
-        )}
+          )}
 
-        {isLoading ? (
-          <div className="text-white/50 text-sm">Loading boards...</div>
-        ) : boards?.length === 0 ? (
-          <div className="text-white/50 text-sm">
-            No boards yet.{" "}
-            <button
-              onClick={() => setCreating(true)}
-              className="underline"
-              style={{ color: "#209dd7" }}
-            >
-              Create your first board
-            </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {boards?.map((board) => (
-              <BoardCard
-                key={board.id}
-                board={board}
-                onDelete={(id) =>
-                  deleteBoard.mutate(id, {
-                    onError: () => toast.error("Failed to delete board"),
-                  })
-                }
-              />
-            ))}
-          </div>
-        )}
+          {isLoading ? (
+            <div className="text-sm" style={{ color: "var(--text-muted)" }}>Loading boards...</div>
+          ) : boards?.length === 0 ? (
+            <div style={{ textAlign: "center", paddingTop: 80 }}>
+              <p
+                className="heading-serif"
+                style={{ fontSize: 24, marginBottom: 12, color: "var(--text-secondary)" }}
+              >
+                No boards yet
+              </p>
+              <p className="text-sm" style={{ color: "var(--text-muted)", marginBottom: 24 }}>
+                Create your first board to get started.
+              </p>
+              <button
+                onClick={() => setCreating(true)}
+                className="btn btn-primary"
+              >
+                + New Board
+              </button>
+            </div>
+          ) : (
+            <div className="card-grid">
+              {boards?.map((board) => (
+                <BoardCard
+                  key={board.id}
+                  board={board}
+                  onDelete={(id) =>
+                    deleteBoard.mutate(id, {
+                      onError: () => toast.error("Failed to delete board"),
+                    })
+                  }
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </main>
+
+      <TitleBlockFooter
+        projectName="Kanban"
+        taskCount={boardCount}
+      />
     </div>
   );
 }
