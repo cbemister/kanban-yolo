@@ -18,6 +18,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
   const board = await prisma.board.findUnique({
     where: { id: boardId },
     include: {
+      labels: { select: { id: true, name: true, color: true }, orderBy: { name: "asc" } },
       columns: {
         orderBy: { position: "asc" },
         include: {
