@@ -1,7 +1,17 @@
+/**
+ * Seed script for local dev user.
+ * Run: npm run seed:dev  (from frontend/)
+ *
+ * Creates a richly-populated "Demo Board" for the dev user so every
+ * feature (labels, assignees, due dates, comments, saved filters) can
+ * be exercised without manual setup.
+ */
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
+
+const DEV_USER_ID = "cmm3vldxl0000kb4g7q10rgk9";
 
 function daysFromNow(days: number): Date {
   const d = new Date();
@@ -24,7 +34,21 @@ const LABEL_DEFS = [
   { name: "Urgent", color: "#e53e3e" },
 ];
 
-async function seedBoard(ownerId: string, boardTitle: string) {
+async function main() {
+  const devUser = await prisma.user.findUnique({ where: { id: DEV_USER_ID } });
+  if (!devUser) {
+    console.error(`Dev user ${DEV_USER_ID} not found. Make sure you are connected to the right database.`);
+    process.exit(1);
+  }
+
+  const existing = await prisma.board.findFirst({
+    where: { title: "Demo Board", userId: DEV_USER_ID },
+  });
+  if (existing) {
+    console.log(`Demo Board already exists for dev user — skipping.`);
+    return;
+  }
+
   const passwordHash = await bcrypt.hash("password123", 10);
 
   const [james, kai, maya] = await Promise.all(
@@ -37,18 +61,10 @@ async function seedBoard(ownerId: string, boardTitle: string) {
     )
   );
 
-  const existing = await prisma.board.findFirst({
-    where: { title: boardTitle, userId: ownerId },
-  });
-  if (existing) {
-    console.log(`Board "${boardTitle}" already exists for user ${ownerId} — skipping.`);
-    return;
-  }
-
   const board = await prisma.board.create({
     data: {
-      title: boardTitle,
-      userId: ownerId,
+      title: "Demo Board",
+      userId: DEV_USER_ID,
       columns: {
         create: [
           { title: "Backlog", position: 0 },
@@ -248,27 +264,13 @@ async function seedBoard(ownerId: string, boardTitle: string) {
   await prisma.savedFilter.create({
     data: {
       boardId: board.id,
-      userId: ownerId,
+      userId: DEV_USER_ID,
       name: "Overdue",
       filters: { labelIds: [], assigneeId: null, dueSoon: false, overdue: true },
     },
   });
 
-  console.log(`Created board: "${boardTitle}" (${board.id}) for user ${ownerId}`);
-}
-
-async function main() {
-  const passwordHash = await bcrypt.hash("password123", 10);
-
-  const demoUser = await prisma.user.upsert({
-    where: { email: "demo@kanban.dev" },
-    update: {},
-    create: { name: "Demo User", email: "demo@kanban.dev", passwordHash },
-  });
-
-  await seedBoard(demoUser.id, "Demo Board");
-
-  console.log("Seeded demo@kanban.dev / password123");
+  console.log(`Created Demo Board (${board.id}) for dev user ${DEV_USER_ID}`);
   console.log("Team: james.dawson@kanban.dev, kai.lee@kanban.dev, maya.reyes@kanban.dev (all: password123)");
 }
 
