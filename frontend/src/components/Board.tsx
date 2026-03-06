@@ -452,6 +452,9 @@ export default function Board({ boardId }: BoardProps) {
 
   useHotkeys(hotkeys);
 
+  const filteredColumns = useMemo(() => applyFilters(columns, filters), [columns, filters]);
+  const totalTasks = useMemo(() => columns.reduce((sum, col) => sum + col.cards.length, 0), [columns]);
+
   if (isLoading) {
     return (
       <div
@@ -477,9 +480,6 @@ export default function Board({ boardId }: BoardProps) {
 
   const currentUserId = session?.user?.id ?? "";
   const currentUserRole = boardData?.ownerId === currentUserId ? "OWNER" : "EDITOR";
-
-  const filteredColumns = useMemo(() => applyFilters(columns, filters), [columns, filters]);
-  const totalTasks = useMemo(() => columns.reduce((sum, col) => sum + col.cards.length, 0), [columns]);
 
   return (
     <div className="flex flex-col min-h-dvh" style={{ position: "relative", zIndex: 1 }}>
