@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
@@ -115,7 +115,7 @@ export default function Board({ boardId }: BoardProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const initialFilters: ActiveFilters = (() => {
+  const [filters, setFilters] = useState<ActiveFilters>(() => {
     const encoded = searchParams.get("filters");
     if (!encoded) return { labelIds: [], assigneeId: null, dueSoon: false, overdue: false };
     try {
@@ -123,9 +123,7 @@ export default function Board({ boardId }: BoardProps) {
     } catch {
       return { labelIds: [], assigneeId: null, dueSoon: false, overdue: false };
     }
-  })();
-
-  const [filters, setFilters] = useState<ActiveFilters>(initialFilters);
+  });
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [shortcutsHelpOpen, setShortcutsHelpOpen] = useState(false);
 
@@ -267,7 +265,7 @@ export default function Board({ boardId }: BoardProps) {
     );
   }
 
-  async function deleteCard(columnId: string, cardId: string) {
+  const deleteCard = useCallback(async function deleteCard(columnId: string, cardId: string) {
     const col = columns.find((c) => c.id === columnId);
     const card = col?.cards.find((c) => c.id === cardId);
     if (!card) return;
@@ -301,9 +299,9 @@ export default function Board({ boardId }: BoardProps) {
     });
 
     toast.success("Card deleted -- press Ctrl+Z to undo");
-  }
+  }, [columns, queryClient, boardId, pushAction]);
 
-  async function updateCard(updated: CardType) {
+  const updateCard = useCallback(async function updateCard(updated: CardType) {
     const res = await fetch(`/api/cards/${updated.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -317,9 +315,9 @@ export default function Board({ boardId }: BoardProps) {
       }))
     );
     if (viewCard?.id === updated.id) setViewCard(updated);
-  }
+  }, [viewCard]);
 
-  async function renameColumn(columnId: string, newTitle: string) {
+  const renameColumn = useCallback(async function renameColumn(columnId: string, newTitle: string) {
     setColumns((cols) =>
       cols.map((col) => (col.id === columnId ? { ...col, title: newTitle } : col))
     );
@@ -332,16 +330,16 @@ export default function Board({ boardId }: BoardProps) {
       toast.error("Failed to rename column");
       queryClient.invalidateQueries({ queryKey: ["board", boardId] });
     }
-  }
+  }, [queryClient, boardId]);
 
-  async function deleteColumn(columnId: string) {
+  const deleteColumn = useCallback(async function deleteColumn(columnId: string) {
     setColumns((cols) => cols.filter((col) => col.id !== columnId));
     const res = await fetch(`/api/columns/${columnId}`, { method: "DELETE" });
     if (!res.ok) {
       toast.error("Failed to delete column");
       queryClient.invalidateQueries({ queryKey: ["board", boardId] });
     }
-  }
+  }, [queryClient, boardId]);
 
   async function addColumn() {
     const res = await fetch("/api/columns", {
@@ -382,7 +380,10 @@ export default function Board({ boardId }: BoardProps) {
   const stableUndo = useCallback(() => { undo(); }, [undo]);
   const stableRedo = useCallback(() => { redo(); }, [redo]);
 
-  useHotkeys([
+  const handleAddCard = useCallback((columnId: string) => setAddCardTarget(columnId), []);
+  const handleViewCard = useCallback((card: CardType) => setViewCard(card), []);
+
+  const hotkeys = useMemo(() => [
     {
       key: "n",
       handler: () => {
@@ -446,7 +447,10 @@ export default function Board({ boardId }: BoardProps) {
       },
       allowInInput: true,
     },
-  ]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ], [stableUndo, stableRedo, columns, commandPaletteOpen, shortcutsHelpOpen, viewCard, addCardTarget]);
+
+  useHotkeys(hotkeys);
 
   if (isLoading) {
     return (
@@ -474,8 +478,8 @@ export default function Board({ boardId }: BoardProps) {
   const currentUserId = session?.user?.id ?? "";
   const currentUserRole = boardData?.ownerId === currentUserId ? "OWNER" : "EDITOR";
 
-  const filteredColumns = applyFilters(columns, filters);
-  const totalTasks = columns.reduce((sum, col) => sum + col.cards.length, 0);
+  const filteredColumns = useMemo(() => applyFilters(columns, filters), [columns, filters]);
+  const totalTasks = useMemo(() => columns.reduce((sum, col) => sum + col.cards.length, 0), [columns]);
 
   return (
     <div className="flex flex-col min-h-dvh" style={{ position: "relative", zIndex: 1 }}>
@@ -502,11 +506,11 @@ export default function Board({ boardId }: BoardProps) {
               <Column
                 key={col.id}
                 column={col}
-                onAddCard={(columnId) => setAddCardTarget(columnId)}
+                onAddCard={handleAddCard}
                 onDeleteCard={deleteCard}
                 onRenameColumn={renameColumn}
                 onDeleteColumn={deleteColumn}
-                onViewCard={(card) => setViewCard(card)}
+                onViewCard={handleViewCard}
               />
             ))}
             <div style={{ marginTop: 40, display: "flex", justifyContent: "center" }}>

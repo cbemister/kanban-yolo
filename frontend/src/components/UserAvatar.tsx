@@ -1,5 +1,7 @@
 "use client";
 
+import { memo } from "react";
+
 interface UserAvatarProps {
   user: { id: string; name: string | null; email: string; image: string | null };
   size?: "sm" | "md" | "lg";
@@ -7,7 +9,7 @@ interface UserAvatarProps {
 
 const sizes = { sm: 24, md: 32, lg: 40 };
 
-export default function UserAvatar({ user, size = "md" }: UserAvatarProps) {
+function UserAvatar({ user, size = "md" }: UserAvatarProps) {
   const px = sizes[size];
   const fontSize = size === "sm" ? 10 : size === "md" ? 13 : 16;
   const initial = (user.name ?? user.email).charAt(0).toUpperCase();
@@ -47,3 +49,5 @@ export default function UserAvatar({ user, size = "md" }: UserAvatarProps) {
     </span>
   );
 }
+
+export default memo(UserAvatar);

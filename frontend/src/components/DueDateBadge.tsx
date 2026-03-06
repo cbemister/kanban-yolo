@@ -1,12 +1,13 @@
 "use client";
 
+import { memo } from "react";
 import { isToday, isTomorrow, isPast, differenceInDays, parseISO, format } from "date-fns";
 
 interface DueDateBadgeProps {
   dueDate: string;
 }
 
-export default function DueDateBadge({ dueDate }: DueDateBadgeProps) {
+function DueDateBadge({ dueDate }: DueDateBadgeProps) {
   const date = parseISO(dueDate);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -45,3 +46,5 @@ export default function DueDateBadge({ dueDate }: DueDateBadgeProps) {
     </span>
   );
 }
+
+export default memo(DueDateBadge);

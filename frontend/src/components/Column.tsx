@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { memo, useState } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import type { Column as ColumnType, Card as CardType } from "@/types";
@@ -15,7 +15,7 @@ interface ColumnProps {
   onViewCard: (card: CardType) => void;
 }
 
-export default function Column({
+function Column({
   column,
   onAddCard,
   onDeleteCard,
@@ -177,3 +177,5 @@ export default function Column({
     </div>
   );
 }
+
+export default memo(Column);

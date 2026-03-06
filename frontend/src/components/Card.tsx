@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { memo, useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { isPast, isToday, isTomorrow, differenceInDays, parseISO } from "date-fns";
@@ -9,6 +9,18 @@ import ConfirmDialog from "./ConfirmDialog";
 import LabelChip from "./LabelChip";
 import UserAvatar from "./UserAvatar";
 import DueDateBadge from "./DueDateBadge";
+
+const paddingMap = {
+  "card-sm": "12px 16px",
+  "card-md": "16px 20px",
+  "card-lg": "24px 28px",
+};
+
+const titleSizeMap = {
+  "card-sm": 15,
+  "card-md": 18,
+  "card-lg": 18,
+};
 
 function getCardSize(card: CardType): "card-sm" | "card-md" | "card-lg" {
   const hasDescription = !!card.details?.trim();
@@ -35,7 +47,7 @@ function isUrgentDate(dueDate: string | null | undefined): boolean {
   return isPast(date) || isToday(date) || isTomorrow(date) || differenceInDays(date, today) <= 2;
 }
 
-export default function Card({ card, columnId, onDelete, onClick }: CardProps) {
+function Card({ card, columnId, onDelete, onClick }: CardProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const {
@@ -58,18 +70,6 @@ export default function Card({ card, columnId, onDelete, onClick }: CardProps) {
   const hasFooter = (card.labels?.length ?? 0) > 0 || (card.assignees?.length ?? 0) > 0 || card.dueDate;
   const urgent = isUrgentDate(card.dueDate);
   const cardSize = getCardSize(card);
-
-  const paddingMap = {
-    "card-sm": "12px 16px",
-    "card-md": "16px 20px",
-    "card-lg": "24px 28px",
-  };
-
-  const titleSizeMap = {
-    "card-sm": 15,
-    "card-md": 18,
-    "card-lg": 18,
-  };
 
   return (
     <>
@@ -102,11 +102,7 @@ export default function Card({ card, columnId, onDelete, onClick }: CardProps) {
           {(card.labels?.length ?? 0) > 0 && (
             <div className="flex gap-2 flex-wrap mb-2">
               {(card.labels ?? []).slice(0, 3).map((cl) => (
-                cardSize === "card-sm" ? (
-                  <LabelChip key={cl.labelId} label={cl.label} size="sm" />
-                ) : (
-                  <LabelChip key={cl.labelId} label={cl.label} size="sm" />
-                )
+                <LabelChip key={cl.labelId} label={cl.label} size="sm" />
               ))}
             </div>
           )}
@@ -190,3 +186,5 @@ export default function Card({ card, columnId, onDelete, onClick }: CardProps) {
     </>
   );
 }
+
+export default memo(Card);

@@ -1,11 +1,13 @@
 "use client";
 
+import { memo } from "react";
+
 interface LabelChipProps {
   label: { id: string; name: string; color: string };
   size?: "sm" | "md";
 }
 
-export default function LabelChip({ label, size = "md" }: LabelChipProps) {
+function LabelChip({ label, size = "md" }: LabelChipProps) {
   if (size === "sm") {
     return (
       <span
@@ -25,3 +27,5 @@ export default function LabelChip({ label, size = "md" }: LabelChipProps) {
     </span>
   );
 }
+
+export default memo(LabelChip);
