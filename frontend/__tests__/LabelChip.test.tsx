@@ -12,36 +12,41 @@ describe("LabelChip", () => {
     expect(screen.getByText("Bug")).toBeInTheDocument();
   });
 
-  it("uses white text on dark background", () => {
+  it("uses the label color as text color (bordered style)", () => {
     render(<LabelChip label={darkLabel} />);
     const chip = screen.getByText("Bug");
-    expect(chip).toHaveStyle({ color: "#ffffff" });
+    expect(chip).toHaveStyle({ color: "#032147" });
   });
 
-  it("uses black text on light background", () => {
+  it("uses the label color as border color", () => {
     render(<LabelChip label={lightLabel} />);
     const chip = screen.getByText("Feature");
-    expect(chip).toHaveStyle({ color: "#000000" });
+    expect(chip).toHaveStyle({ borderColor: "#ecad0a" });
   });
 
-  it("uses the label color as background", () => {
+  it("applies the label-chip class", () => {
     render(<LabelChip label={darkLabel} />);
     const chip = screen.getByText("Bug");
-    expect(chip).toHaveStyle({ background: "#032147" });
+    expect(chip.className).toContain("label-chip");
   });
 
-  it("applies sm size classes", () => {
+  it("renders sm size as a colored dot with no text", () => {
     render(<LabelChip label={darkLabel} size="sm" />);
-    const chip = screen.getByText("Bug");
-    expect(chip.className).toContain("text-xs");
-    expect(chip.className).toContain("px-2");
+    // sm renders a dot — text is not visible, accessed via title
+    expect(screen.queryByText("Bug")).not.toBeInTheDocument();
+    const dot = document.querySelector(".label-chip-dot");
+    expect(dot).toBeInTheDocument();
   });
 
-  it("applies md size classes by default", () => {
-    render(<LabelChip label={darkLabel} />);
-    const chip = screen.getByText("Bug");
-    expect(chip.className).toContain("text-sm");
-    expect(chip.className).toContain("px-2.5");
+  it("sm dot uses label color as background", () => {
+    render(<LabelChip label={darkLabel} size="sm" />);
+    const dot = document.querySelector(".label-chip-dot") as HTMLElement;
+    expect(dot).toHaveStyle({ background: "#032147" });
+  });
+
+  it("sm dot exposes label name via title attribute", () => {
+    render(<LabelChip label={darkLabel} size="sm" />);
+    expect(screen.getByTitle("Bug")).toBeInTheDocument();
   });
 
   it("renders multiple chips independently", () => {
@@ -55,12 +60,5 @@ describe("LabelChip", () => {
     expect(screen.getByText("Bug")).toBeInTheDocument();
     expect(screen.getByText("Feature")).toBeInTheDocument();
     expect(screen.getByText("Docs")).toBeInTheDocument();
-  });
-
-  it("treats mid-range luminance as light (black text)", () => {
-    render(<LabelChip label={midLabel} />);
-    const chip = screen.getByText("Docs");
-    // #888888 luminance ≈ 0.53 — just above the 0.5 threshold → black text
-    expect(chip).toHaveStyle({ color: "#000000" });
   });
 });

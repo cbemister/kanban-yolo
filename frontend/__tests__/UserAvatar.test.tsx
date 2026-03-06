@@ -73,6 +73,13 @@ describe("UserAvatar", () => {
       const span = screen.getByTitle("Bob Jones");
       expect(span).toBeInTheDocument();
     });
+
+    it("renders initials in a span element", () => {
+      const { container } = render(<UserAvatar user={userWithName} />);
+      const span = container.querySelector("span");
+      expect(span).toBeInTheDocument();
+      expect(span?.textContent).toBe("B");
+    });
   });
 
   describe("sizes", () => {
@@ -95,8 +102,8 @@ describe("UserAvatar", () => {
     });
   });
 
-  describe("color consistency", () => {
-    it("assigns the same background color for the same user id", () => {
+  describe("consistency", () => {
+    it("renders consistently for the same user on re-render", () => {
       const { rerender, container } = render(<UserAvatar user={userWithName} />);
       const firstBg = (container.firstChild as HTMLElement).style.background;
 
@@ -106,15 +113,13 @@ describe("UserAvatar", () => {
       expect(firstBg).toBe(secondBg);
     });
 
-    it("assigns different colors to different user ids", () => {
+    it("all initials avatars share the same structure regardless of user id", () => {
       const { container: c1 } = render(<UserAvatar user={userWithName} />);
       const { container: c2 } = render(<UserAvatar user={userWithoutName} />);
 
-      const bg1 = (c1.firstChild as HTMLElement).style.background;
-      const bg2 = (c2.firstChild as HTMLElement).style.background;
-
-      // Different ids should hash to different colors (probabilistically true for these specific ids)
-      expect(bg1).not.toBe(bg2);
+      // Both avatars are spans (not images) with the same size attributes
+      expect(c1.querySelector("span")).toBeInTheDocument();
+      expect(c2.querySelector("span")).toBeInTheDocument();
     });
   });
 });

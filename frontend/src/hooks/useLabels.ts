@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Label } from "@/types";
 
-export function useLabels(boardId: string) {
+export function useLabels(boardId: string, options?: { enabled?: boolean }) {
   return useQuery<Label[]>({
     queryKey: ["labels", boardId],
     queryFn: async () => {
@@ -9,7 +9,7 @@ export function useLabels(boardId: string) {
       if (!res.ok) throw new Error("Failed to fetch labels");
       return res.json();
     },
-    enabled: !!boardId,
+    enabled: !!boardId && options?.enabled !== false,
   });
 }
 

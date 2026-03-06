@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { BoardMember } from "@/types";
 
-export function useMembers(boardId: string) {
+export function useMembers(boardId: string, options?: { enabled?: boolean }) {
   return useQuery<BoardMember[]>({
     queryKey: ["members", boardId],
     queryFn: async () => {
@@ -9,7 +9,7 @@ export function useMembers(boardId: string) {
       if (!res.ok) throw new Error("Failed to fetch members");
       return res.json();
     },
-    enabled: !!boardId,
+    enabled: !!boardId && options?.enabled !== false,
   });
 }
 

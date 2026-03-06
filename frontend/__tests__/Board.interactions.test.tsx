@@ -116,6 +116,11 @@ jest.mock("@/components/NotificationBell", () => {
   Mock.displayName = "NotificationBell";
   return { __esModule: true, default: Mock };
 });
+jest.mock("@/components/TitleBlockFooter", () => {
+  const Mock = () => null;
+  Mock.displayName = "TitleBlockFooter";
+  return { __esModule: true, default: Mock };
+});
 jest.mock("@/components/AttachmentList", () => {
   const Mock = () => null;
   Mock.displayName = "AttachmentList";
@@ -270,7 +275,8 @@ describe("Board interactions", () => {
 
   it("renders label chips on cards that have labels", () => {
     renderBoard();
-    expect(screen.getByText("Bug")).toBeInTheDocument();
+    // sm-size label chips render as colored dots; the label name is in the title attribute
+    expect(screen.getByTitle("Bug")).toBeInTheDocument();
   });
 
   it("renders the board title in the toolbar", () => {

@@ -23,11 +23,11 @@ export function useBoardMutations() {
   const queryClient = useQueryClient();
 
   const createBoard = useMutation({
-    mutationFn: async (title: string) => {
+    mutationFn: async ({ title, templateId }: { title: string; templateId?: string }) => {
       const res = await fetch("/api/boards", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title }),
+        body: JSON.stringify({ title, templateId }),
       });
       if (!res.ok) throw new Error("Failed to create board");
       return res.json();

@@ -25,9 +25,9 @@ describe("DueDateBadge", () => {
     expect(screen.getByText("Today")).toBeInTheDocument();
   });
 
-  it("uses yellow color for today", () => {
+  it("uses urgent (accent) color for today", () => {
     render(<DueDateBadge dueDate={isoFor(FIXED_NOW)} />);
-    expect(screen.getByText("Today")).toHaveStyle({ color: "#ecad0a" });
+    expect(screen.getByText("Today")).toHaveStyle({ color: "var(--accent)" });
   });
 
   it("shows 'Tomorrow' for tomorrow's date", () => {
@@ -35,34 +35,43 @@ describe("DueDateBadge", () => {
     expect(screen.getByText("Tomorrow")).toBeInTheDocument();
   });
 
-  it("uses yellow color for tomorrow", () => {
+  it("uses urgent (accent) color for tomorrow", () => {
     render(<DueDateBadge dueDate={isoFor(addDays(FIXED_NOW, 1))} />);
-    expect(screen.getByText("Tomorrow")).toHaveStyle({ color: "#ecad0a" });
+    expect(screen.getByText("Tomorrow")).toHaveStyle({ color: "var(--accent)" });
   });
 
-  it("shows formatted date and yellow color for 2 days away", () => {
+  it("shows formatted date and urgent (accent) color for 2 days away", () => {
     const twoDays = addDays(FIXED_NOW, 2);
     render(<DueDateBadge dueDate={isoFor(twoDays)} />);
     expect(screen.getByText(format(twoDays, "MMM d"))).toBeInTheDocument();
-    expect(screen.getByText(format(twoDays, "MMM d"))).toHaveStyle({ color: "#ecad0a" });
+    expect(screen.getByText(format(twoDays, "MMM d"))).toHaveStyle({ color: "var(--accent)" });
   });
 
-  it("shows formatted date and gray color for dates far in the future", () => {
+  it("shows formatted date and muted color for dates far in the future", () => {
     const future = addDays(FIXED_NOW, 10);
     render(<DueDateBadge dueDate={isoFor(future)} />);
-    expect(screen.getByText(format(future, "MMM d"))).toHaveStyle({ color: "#888888" });
+    expect(screen.getByText(format(future, "MMM d"))).toHaveStyle({ color: "var(--text-muted)" });
   });
 
-  it("shows formatted date and red color for overdue dates", () => {
+  it("shows overdue label with -- Overdue suffix for past dates", () => {
     const past = subDays(FIXED_NOW, 3);
     render(<DueDateBadge dueDate={isoFor(past)} />);
-    expect(screen.getByText(format(past, "MMM d"))).toHaveStyle({ color: "#ef4444" });
+    const label = `${format(past, "MMM d")} -- Overdue`;
+    expect(screen.getByText(label)).toBeInTheDocument();
   });
 
-  it("shows formatted date and red color for yesterday", () => {
+  it("uses urgent (accent) color for overdue dates", () => {
+    const past = subDays(FIXED_NOW, 3);
+    render(<DueDateBadge dueDate={isoFor(past)} />);
+    const label = `${format(past, "MMM d")} -- Overdue`;
+    expect(screen.getByText(label)).toHaveStyle({ color: "var(--accent)" });
+  });
+
+  it("shows overdue label for yesterday", () => {
     const yesterday = subDays(FIXED_NOW, 1);
     render(<DueDateBadge dueDate={isoFor(yesterday)} />);
-    expect(screen.getByText(format(yesterday, "MMM d"))).toHaveStyle({ color: "#ef4444" });
+    const label = `${format(yesterday, "MMM d")} -- Overdue`;
+    expect(screen.getByText(label)).toBeInTheDocument();
   });
 
   it("renders a span element", () => {

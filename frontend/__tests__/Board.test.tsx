@@ -85,6 +85,11 @@ jest.mock("@/components/NotificationBell", () => {
   Mock.displayName = "NotificationBell";
   return { __esModule: true, default: Mock };
 });
+jest.mock("@/components/TitleBlockFooter", () => {
+  const Mock = () => null;
+  Mock.displayName = "TitleBlockFooter";
+  return { __esModule: true, default: Mock };
+});
 
 // Mock fetch globally
 global.fetch = jest.fn(() =>
