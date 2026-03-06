@@ -64,7 +64,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
   const boardId = await getBoardIdFromCard(cardId);
   if (boardId) {
-    await broadcastToBoard(boardId, "card:updated", { cardId, boardId });
+    await broadcastToBoard(boardId, "card:updated", { cardId, boardId, userId });
     await logActivity(boardId, userId, "updated card", { cardTitle: updated.title }, cardId);
   }
 
@@ -84,7 +84,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
   await prisma.card.delete({ where: { id: cardId } });
 
   if (boardId) {
-    await broadcastToBoard(boardId, "card:deleted", { cardId, boardId });
+    await broadcastToBoard(boardId, "card:deleted", { cardId, boardId, userId });
     await logActivity(boardId, userId, "deleted card", { cardTitle: card.title });
   }
 

@@ -38,7 +38,7 @@ export async function PUT(req: NextRequest) {
     data: { columnId: targetColumnId, position },
   });
 
-  await broadcastToBoard(targetColumn.boardId, "card:moved", { cardId, boardId: targetColumn.boardId });
+  await broadcastToBoard(targetColumn.boardId, "card:moved", { cardId, boardId: targetColumn.boardId, userId });
   await logActivity(
     targetColumn.boardId,
     userId,

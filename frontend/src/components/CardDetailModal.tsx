@@ -48,6 +48,30 @@ export default function CardDetailModal({ card, boardId, currentUserId, onClose,
 
   async function handleLabelToggle(labelId: string) {
     const isSelected = (card.labels ?? []).some((cl) => cl.labelId === labelId);
+
+    const previousBoard = queryClient.getQueryData(["board", boardId]);
+    queryClient.setQueryData(["board", boardId], (old: any) => {
+      if (!old) return old;
+      const boardLabels = queryClient.getQueryData<{ id: string; name: string; color: string }[]>(["labels", boardId]) ?? [];
+      const labelObj = boardLabels.find((l) => l.id === labelId) ?? { id: labelId, name: "", color: "" };
+      return {
+        ...old,
+        columns: old.columns.map((col: any) => ({
+          ...col,
+          cards: col.cards.map((c: any) => {
+            if (c.id !== card.id) return c;
+            const labels = c.labels ?? [];
+            return {
+              ...c,
+              labels: isSelected
+                ? labels.filter((cl: any) => cl.labelId !== labelId)
+                : [...labels, { cardId: card.id, labelId, label: labelObj }],
+            };
+          }),
+        })),
+      };
+    });
+
     try {
       const res = await fetch(`/api/cards/${card.id}/labels`, {
         method: isSelected ? "DELETE" : "POST",
@@ -55,14 +79,38 @@ export default function CardDetailModal({ card, boardId, currentUserId, onClose,
         body: JSON.stringify({ labelId }),
       });
       if (!res.ok) throw new Error();
-      queryClient.invalidateQueries({ queryKey: ["board", boardId] });
     } catch {
+      queryClient.setQueryData(["board", boardId], previousBoard);
       toast.error("Failed to update label");
     }
   }
 
   async function handleAssigneeToggle(userId: string) {
     const isAssigned = (card.assignees ?? []).some((a) => a.userId === userId);
+
+    const previousBoard = queryClient.getQueryData(["board", boardId]);
+    queryClient.setQueryData(["board", boardId], (old: any) => {
+      if (!old) return old;
+      const members = queryClient.getQueryData<{ userId: string; user: any }[]>(["members", boardId]) ?? [];
+      const memberUser = members.find((m) => m.userId === userId)?.user ?? { id: userId, name: null, email: "", image: null };
+      return {
+        ...old,
+        columns: old.columns.map((col: any) => ({
+          ...col,
+          cards: col.cards.map((c: any) => {
+            if (c.id !== card.id) return c;
+            const assignees = c.assignees ?? [];
+            return {
+              ...c,
+              assignees: isAssigned
+                ? assignees.filter((a: any) => a.userId !== userId)
+                : [...assignees, { cardId: card.id, userId, user: memberUser }],
+            };
+          }),
+        })),
+      };
+    });
+
     try {
       const res = await fetch(`/api/cards/${card.id}/assignees`, {
         method: isAssigned ? "DELETE" : "POST",
@@ -70,13 +118,28 @@ export default function CardDetailModal({ card, boardId, currentUserId, onClose,
         body: JSON.stringify({ userId }),
       });
       if (!res.ok) throw new Error();
-      queryClient.invalidateQueries({ queryKey: ["board", boardId] });
     } catch {
+      queryClient.setQueryData(["board", boardId], previousBoard);
       toast.error("Failed to update assignee");
     }
   }
 
   async function handleDueDateChange(date: Date | null) {
+    const previousBoard = queryClient.getQueryData(["board", boardId]);
+    queryClient.setQueryData(["board", boardId], (old: any) => {
+      if (!old) return old;
+      return {
+        ...old,
+        columns: old.columns.map((col: any) => ({
+          ...col,
+          cards: col.cards.map((c: any) => {
+            if (c.id !== card.id) return c;
+            return { ...c, dueDate: date ? date.toISOString() : null };
+          }),
+        })),
+      };
+    });
+
     try {
       const res = await fetch(`/api/cards/${card.id}`, {
         method: "PATCH",
@@ -84,8 +147,8 @@ export default function CardDetailModal({ card, boardId, currentUserId, onClose,
         body: JSON.stringify({ dueDate: date ? date.toISOString() : null }),
       });
       if (!res.ok) throw new Error();
-      queryClient.invalidateQueries({ queryKey: ["board", boardId] });
     } catch {
+      queryClient.setQueryData(["board", boardId], previousBoard);
       toast.error("Failed to update due date");
     }
   }

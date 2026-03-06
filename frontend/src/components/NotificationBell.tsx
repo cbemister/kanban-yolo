@@ -1,28 +1,24 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import NotificationDropdown from "./NotificationDropdown";
 
-interface Props {
-  initialUnreadCount?: number;
-}
-
-export default function NotificationBell({ initialUnreadCount = 0 }: Props) {
+export default function NotificationBell() {
   const [open, setOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(initialUnreadCount);
   const ref = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
 
-  // Poll for unread count every 60s
-  useEffect(() => {
-    function fetchUnread() {
-      fetch("/api/notifications?unread=true")
-        .then((r) => r.json())
-        .then((data: unknown[]) => setUnreadCount(data.length))
-        .catch(() => {});
-    }
-    fetchUnread();
-    const interval = setInterval(fetchUnread, 60000);
-    return () => clearInterval(interval);
-  }, []);
+  const { data: unreadNotifications = [] } = useQuery<unknown[]>({
+    queryKey: ["notifications", "unread"],
+    queryFn: async () => {
+      const res = await fetch("/api/notifications?unread=true");
+      if (!res.ok) return [];
+      return res.json();
+    },
+    refetchInterval: 60_000,
+  });
+
+  const unreadCount = unreadNotifications.length;
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -68,7 +64,7 @@ export default function NotificationBell({ initialUnreadCount = 0 }: Props) {
       {open && (
         <NotificationDropdown
           onClose={() => setOpen(false)}
-          onReadAll={() => setUnreadCount(0)}
+          onReadAll={() => queryClient.setQueryData(["notifications", "unread"], [])}
         />
       )}
     </div>
