@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import type { ActiveFilters } from "@/types";
@@ -10,10 +11,11 @@ import SearchBar from "./SearchBar";
 import SearchResults from "./SearchResults";
 import FilterBar from "./FilterBar";
 import PresenceIndicator from "./PresenceIndicator";
-import ShareModal from "./ShareModal";
-import ActivitySidebar from "./ActivitySidebar";
 import { ThemeToggle } from "./ThemeToggle";
 import NotificationBell from "./NotificationBell";
+
+const ShareModal = dynamic(() => import("./ShareModal"), { ssr: false });
+const ActivitySidebar = dynamic(() => import("./ActivitySidebar"), { ssr: false });
 
 interface BoardToolbarProps {
   boardId: string;

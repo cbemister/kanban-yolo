@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUserId, unauthorized, notFound } from "@/lib/auth-helpers";
+import { broadcastToBoard } from "@/lib/broadcast";
 
 const reorderSchema = z.object({
   columnId: z.string(),
@@ -28,6 +29,8 @@ export async function PUT(req: NextRequest) {
       prisma.card.update({ where: { id }, data: { position } })
     )
   );
+
+  await broadcastToBoard(column.boardId, "card:updated", { boardId: column.boardId });
 
   return new NextResponse(null, { status: 204 });
 }

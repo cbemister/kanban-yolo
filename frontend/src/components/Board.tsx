@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import dynamic from "next/dynamic";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
@@ -22,14 +23,15 @@ import { useBoardChannel } from "@/hooks/useBoardChannel";
 import type { SearchResult } from "@/hooks/useSearch";
 import Column from "./Column";
 import AddCardModal from "./AddCardModal";
-import CardDetailModal from "./CardDetailModal";
 import BoardToolbar from "./BoardToolbar";
 import { isPast, differenceInDays, parseISO } from "date-fns";
 import { useHotkeys } from "@/hooks/useHotkeys";
 import { useUndoRedo } from "@/hooks/useUndoRedo";
-import CommandPalette from "./CommandPalette";
-import ShortcutsHelp from "./ShortcutsHelp";
 import TitleBlockFooter from "./TitleBlockFooter";
+
+const CardDetailModal = dynamic(() => import("./CardDetailModal"), { ssr: false });
+const CommandPalette = dynamic(() => import("./CommandPalette"), { ssr: false });
+const ShortcutsHelp = dynamic(() => import("./ShortcutsHelp"), { ssr: false });
 
 function CardOverlay({ card }: { card: CardType }) {
   return (

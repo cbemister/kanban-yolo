@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import type { Card } from "@/types";
@@ -8,8 +9,9 @@ import LabelPicker from "./LabelPicker";
 import LabelChip from "./LabelChip";
 import AssigneePicker from "./AssigneePicker";
 import UserAvatar from "./UserAvatar";
-import DueDatePicker from "./DueDatePicker";
 import DueDateBadge from "./DueDateBadge";
+
+const DueDatePicker = dynamic(() => import("./DueDatePicker"), { ssr: false });
 import CommentList from "./CommentList";
 import CommentInput from "./CommentInput";
 import AttachmentList from "./AttachmentList";
