@@ -10,6 +10,7 @@ export function useLabels(boardId: string, options?: { enabled?: boolean }) {
       return res.json();
     },
     enabled: !!boardId && options?.enabled !== false,
+    staleTime: 30_000,
   });
 }
 

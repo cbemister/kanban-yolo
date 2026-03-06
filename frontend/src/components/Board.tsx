@@ -108,7 +108,9 @@ export default function Board({ boardId }: BoardProps) {
   const queryClient = useQueryClient();
   const { data: session } = useSession();
   const { data: boardData, isLoading, error } = useBoard(boardId);
-  const [columns, setColumns] = useState<ColumnType[]>([]);
+  const serverColumns = boardData?.columns ?? [];
+  const [localOverride, setLocalOverride] = useState<ColumnType[] | null>(null);
+  const columns = localOverride ?? serverColumns;
   const [activeCard, setActiveCard] = useState<CardType | null>(null);
   const [addCardTarget, setAddCardTarget] = useState<string | null>(null);
   const [viewCard, setViewCard] = useState<CardType | null>(null);
@@ -134,8 +136,9 @@ export default function Board({ boardId }: BoardProps) {
   // Real-time sync
   useBoardChannel(boardId);
 
+  // Clear local DnD override when fresh server data arrives
   useEffect(() => {
-    if (boardData) setColumns(boardData.columns);
+    setLocalOverride(null);
   }, [boardData]);
 
   const sensors = useSensors(
@@ -185,28 +188,26 @@ export default function Board({ boardId }: BoardProps) {
       if (idx !== -1) insertIndex = idx;
     }
 
-    setColumns((cols) => {
-      const activeColIndex = cols.findIndex((c) => c.id === activeColumn.id);
-      const overColIndex = cols.findIndex((c) => c.id === overColumnId);
-      const activeCardIndex = cols[activeColIndex].cards.findIndex((c) => c.id === activeId);
-      const draggedCard = cols[activeColIndex].cards[activeCardIndex];
+    const activeColIndex = columns.findIndex((c) => c.id === activeColumn.id);
+    const overColIndex = columns.findIndex((c) => c.id === overColumnId);
+    const activeCardIndex = columns[activeColIndex].cards.findIndex((c) => c.id === activeId);
+    const draggedCard = columns[activeColIndex].cards[activeCardIndex];
 
-      let idx = cols[overColIndex].cards.length;
-      if (!isColumnId(overId)) {
-        const oIdx = cols[overColIndex].cards.findIndex((c) => c.id === overId);
-        if (oIdx !== -1) idx = oIdx;
+    let idx = columns[overColIndex].cards.length;
+    if (!isColumnId(overId)) {
+      const oIdx = columns[overColIndex].cards.findIndex((c) => c.id === overId);
+      if (oIdx !== -1) idx = oIdx;
+    }
+
+    setLocalOverride(columns.map((col, i) => {
+      if (i === activeColIndex) return { ...col, cards: col.cards.filter((c) => c.id !== activeId) };
+      if (i === overColIndex) {
+        const newCards = [...col.cards];
+        newCards.splice(idx, 0, draggedCard);
+        return { ...col, cards: newCards };
       }
-
-      return cols.map((col, i) => {
-        if (i === activeColIndex) return { ...col, cards: col.cards.filter((c) => c.id !== activeId) };
-        if (i === overColIndex) {
-          const newCards = [...col.cards];
-          newCards.splice(idx, 0, draggedCard);
-          return { ...col, cards: newCards };
-        }
-        return col;
-      });
-    });
+      return col;
+    }));
 
     fetch("/api/cards/move", {
       method: "PUT",
@@ -241,9 +242,7 @@ export default function Board({ boardId }: BoardProps) {
 
     const newCards = arrayMove(activeCol.cards, oldIndex, newIndex);
 
-    setColumns((cols) =>
-      cols.map((col) => (col.id !== activeCol.id ? col : { ...col, cards: newCards }))
-    );
+    setLocalOverride(columns.map((col) => (col.id !== activeCol.id ? col : { ...col, cards: newCards })));
 
     fetch("/api/cards/reorder", {
       method: "PUT",
@@ -262,9 +261,7 @@ export default function Board({ boardId }: BoardProps) {
     });
     if (!res.ok) { toast.error("Failed to add card"); return; }
     const card: CardType = await res.json();
-    setColumns((cols) =>
-      cols.map((col) => col.id === columnId ? { ...col, cards: [...col.cards, card] } : col)
-    );
+    setLocalOverride(columns.map((col) => col.id === columnId ? { ...col, cards: [...col.cards, card] } : col));
   }
 
   async function deleteCard(columnId: string, cardId: string) {
@@ -272,11 +269,9 @@ export default function Board({ boardId }: BoardProps) {
     const card = col?.cards.find((c) => c.id === cardId);
     if (!card) return;
 
-    setColumns((cols) =>
-      cols.map((c) =>
-        c.id === columnId ? { ...c, cards: c.cards.filter((ca) => ca.id !== cardId) } : c
-      )
-    );
+    setLocalOverride(columns.map((c) =>
+      c.id === columnId ? { ...c, cards: c.cards.filter((ca) => ca.id !== cardId) } : c
+    ));
 
     const res = await fetch(`/api/cards/${cardId}`, { method: "DELETE" });
     if (!res.ok) {
@@ -310,19 +305,15 @@ export default function Board({ boardId }: BoardProps) {
       body: JSON.stringify({ title: updated.title, details: updated.details }),
     });
     if (!res.ok) { toast.error("Failed to save card"); return; }
-    setColumns((cols) =>
-      cols.map((col) => ({
-        ...col,
-        cards: col.cards.map((c) => (c.id === updated.id ? updated : c)),
-      }))
-    );
+    setLocalOverride(columns.map((col) => ({
+      ...col,
+      cards: col.cards.map((c) => (c.id === updated.id ? updated : c)),
+    })));
     if (viewCard?.id === updated.id) setViewCard(updated);
   }
 
   async function renameColumn(columnId: string, newTitle: string) {
-    setColumns((cols) =>
-      cols.map((col) => (col.id === columnId ? { ...col, title: newTitle } : col))
-    );
+    setLocalOverride(columns.map((col) => (col.id === columnId ? { ...col, title: newTitle } : col)));
     const res = await fetch(`/api/columns/${columnId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -335,7 +326,7 @@ export default function Board({ boardId }: BoardProps) {
   }
 
   async function deleteColumn(columnId: string) {
-    setColumns((cols) => cols.filter((col) => col.id !== columnId));
+    setLocalOverride(columns.filter((col) => col.id !== columnId));
     const res = await fetch(`/api/columns/${columnId}`, { method: "DELETE" });
     if (!res.ok) {
       toast.error("Failed to delete column");
@@ -351,7 +342,7 @@ export default function Board({ boardId }: BoardProps) {
     });
     if (!res.ok) { toast.error("Failed to add column"); return; }
     const newColumn = await res.json();
-    setColumns((cols) => [...cols, { ...newColumn, cards: [] }]);
+    setLocalOverride([...columns, { ...newColumn, cards: [] }]);
   }
 
   function handleFiltersChange(f: ActiveFilters) {

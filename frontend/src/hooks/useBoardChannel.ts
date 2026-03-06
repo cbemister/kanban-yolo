@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
 import { getPusherClient } from "@/lib/pusher-client";
 
 interface OnlineUser {
@@ -12,6 +13,7 @@ interface OnlineUser {
 
 export function useBoardChannel(boardId: string) {
   const queryClient = useQueryClient();
+  const { data: session } = useSession();
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
 
   useEffect(() => {
@@ -19,6 +21,7 @@ export function useBoardChannel(boardId: string) {
       return;
     }
 
+    const currentUserId = session?.user?.id;
     const pusher = getPusherClient();
     const channel = pusher.subscribe(`presence-board-${boardId}`) as ReturnType<typeof pusher.subscribe> & {
       members: {
@@ -27,8 +30,20 @@ export function useBoardChannel(boardId: string) {
       };
     };
 
-    function invalidateBoard() {
+    function invalidateBoard(eventData?: { userId?: string }) {
+      if (eventData?.userId && currentUserId && eventData.userId === currentUserId) return;
       queryClient.invalidateQueries({ queryKey: ["board", boardId] });
+    }
+
+    function invalidateLabels(eventData?: { userId?: string }) {
+      if (eventData?.userId && currentUserId && eventData.userId === currentUserId) return;
+      queryClient.invalidateQueries({ queryKey: ["labels", boardId] });
+      queryClient.invalidateQueries({ queryKey: ["board", boardId] });
+    }
+
+    function invalidateMembers(eventData?: { userId?: string }) {
+      if (eventData?.userId && currentUserId && eventData.userId === currentUserId) return;
+      queryClient.invalidateQueries({ queryKey: ["members", boardId] });
     }
 
     channel.bind("pusher:subscription_succeeded", () => {
@@ -50,24 +65,37 @@ export function useBoardChannel(boardId: string) {
       setOnlineUsers((prev) => prev.filter((u) => u.id !== member.id));
     });
 
-    const dataEvents = [
+    const cardColumnEvents = [
       "card:created", "card:updated", "card:deleted", "card:moved",
       "column:created", "column:updated", "column:deleted",
-      "label:created", "label:updated", "label:deleted",
-      "member:added", "member:removed",
     ];
 
-    for (const event of dataEvents) {
+    const labelEvents = ["label:created", "label:updated", "label:deleted"];
+    const memberEvents = ["member:added", "member:removed"];
+
+    for (const event of cardColumnEvents) {
       channel.bind(event, invalidateBoard);
+    }
+    for (const event of labelEvents) {
+      channel.bind(event, invalidateLabels);
+    }
+    for (const event of memberEvents) {
+      channel.bind(event, invalidateMembers);
     }
 
     return () => {
-      for (const event of dataEvents) {
+      for (const event of cardColumnEvents) {
         channel.unbind(event, invalidateBoard);
+      }
+      for (const event of labelEvents) {
+        channel.unbind(event, invalidateLabels);
+      }
+      for (const event of memberEvents) {
+        channel.unbind(event, invalidateMembers);
       }
       pusher.unsubscribe(`presence-board-${boardId}`);
     };
-  }, [boardId, queryClient]);
+  }, [boardId, queryClient, session?.user?.id]);
 
   return { onlineUsers };
 }

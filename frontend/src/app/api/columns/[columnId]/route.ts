@@ -41,7 +41,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     data: parsed.data,
   });
 
-  await broadcastToBoard(column.boardId, "column:updated", { columnId, boardId: column.boardId });
+  await broadcastToBoard(column.boardId, "column:updated", { columnId, boardId: column.boardId, userId });
 
   return NextResponse.json(updated);
 }
@@ -56,7 +56,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
 
   await prisma.column.delete({ where: { id: columnId } });
 
-  await broadcastToBoard(column.boardId, "column:deleted", { columnId, boardId: column.boardId });
+  await broadcastToBoard(column.boardId, "column:deleted", { columnId, boardId: column.boardId, userId });
   await logActivity(column.boardId, userId, "deleted column", { columnTitle: column.title });
 
   return new NextResponse(null, { status: 204 });
