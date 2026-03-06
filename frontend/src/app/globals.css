@@ -276,7 +276,7 @@ body::before {
   font-family: var(--font-sans);
   font-size: 13px;
   color: var(--text-primary);
-  padding: 4px 0;
+  padding: 4px 0 4px 20px;
   outline: none;
   transition: border-color var(--transition-fast);
 }
