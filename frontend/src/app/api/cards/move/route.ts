@@ -38,14 +38,16 @@ export async function PUT(req: NextRequest) {
     data: { columnId: targetColumnId, position },
   });
 
-  await broadcastToBoard(targetColumn.boardId, "card:moved", { cardId, boardId: targetColumn.boardId, userId });
-  await logActivity(
-    targetColumn.boardId,
-    userId,
-    "moved card",
-    { cardTitle: card.title, targetColumnTitle: targetColumn.title },
-    cardId
-  );
+  await Promise.all([
+    broadcastToBoard(targetColumn.boardId, "card:moved", { cardId, boardId: targetColumn.boardId, userId }),
+    logActivity(
+      targetColumn.boardId,
+      userId,
+      "moved card",
+      { cardTitle: card.title, targetColumnTitle: targetColumn.title },
+      cardId
+    ),
+  ]);
 
   return NextResponse.json(updated);
 }

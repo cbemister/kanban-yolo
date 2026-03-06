@@ -2,6 +2,15 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import UserAvatar from "@/components/UserAvatar";
 
+jest.mock("next/image", () => {
+  const MockImage = ({ src, alt }: { src: string; alt: string }) => (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={src} alt={alt} />
+  );
+  MockImage.displayName = "Image";
+  return MockImage;
+});
+
 const userWithImage = {
   id: "u1",
   name: "Alice Smith",

@@ -40,8 +40,10 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  await broadcastToBoard(parsed.data.boardId, "column:created", { columnId: column.id, boardId: parsed.data.boardId, userId });
-  await logActivity(parsed.data.boardId, userId, "created column", { columnTitle: column.title });
+  await Promise.all([
+    broadcastToBoard(parsed.data.boardId, "column:created", { columnId: column.id, boardId: parsed.data.boardId, userId }),
+    logActivity(parsed.data.boardId, userId, "created column", { columnTitle: column.title }),
+  ]);
 
   return NextResponse.json(column, { status: 201 });
 }

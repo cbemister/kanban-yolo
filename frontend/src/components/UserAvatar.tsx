@@ -1,6 +1,7 @@
 "use client";
 
 import { memo } from "react";
+import Image from "next/image";
 
 interface UserAvatarProps {
   user: { id: string; name: string | null; email: string; image: string | null };
@@ -16,7 +17,7 @@ function UserAvatar({ user, size = "md" }: UserAvatarProps) {
 
   if (user.image) {
     return (
-      <img
+      <Image
         src={user.image}
         alt={user.name ?? user.email}
         title={user.name ?? user.email}

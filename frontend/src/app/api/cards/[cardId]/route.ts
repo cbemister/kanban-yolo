@@ -7,7 +7,6 @@ import {
   notFound,
 } from "@/lib/auth-helpers";
 import { broadcastToBoard } from "@/lib/broadcast";
-import { getBoardIdFromCard } from "@/lib/permissions";
 import { logActivity } from "@/lib/activity";
 
 type Params = { params: Promise<{ cardId: string }> };
@@ -15,6 +14,7 @@ type Params = { params: Promise<{ cardId: string }> };
 async function getCardForUser(cardId: string, userId: string) {
   return prisma.card.findFirst({
     where: { id: cardId, column: { board: { userId } } },
+    include: { column: { select: { boardId: true } } },
   });
 }
 
@@ -62,11 +62,11 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     data: updateData,
   });
 
-  const boardId = await getBoardIdFromCard(cardId);
-  if (boardId) {
-    await broadcastToBoard(boardId, "card:updated", { cardId, boardId, userId });
-    await logActivity(boardId, userId, "updated card", { cardTitle: updated.title }, cardId);
-  }
+  const boardId = card.column.boardId;
+  await Promise.all([
+    broadcastToBoard(boardId, "card:updated", { cardId, boardId, userId }),
+    logActivity(boardId, userId, "updated card", { cardTitle: updated.title }, cardId),
+  ]);
 
   return NextResponse.json(updated);
 }
@@ -79,14 +79,14 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
   const card = await getCardForUser(cardId, userId);
   if (!card) return notFound();
 
-  const boardId = await getBoardIdFromCard(cardId);
+  const boardId = card.column.boardId;
 
   await prisma.card.delete({ where: { id: cardId } });
 
-  if (boardId) {
-    await broadcastToBoard(boardId, "card:deleted", { cardId, boardId, userId });
-    await logActivity(boardId, userId, "deleted card", { cardTitle: card.title });
-  }
+  await Promise.all([
+    broadcastToBoard(boardId, "card:deleted", { cardId, boardId, userId }),
+    logActivity(boardId, userId, "deleted card", { cardTitle: card.title }),
+  ]);
 
   return new NextResponse(null, { status: 204 });
 }
